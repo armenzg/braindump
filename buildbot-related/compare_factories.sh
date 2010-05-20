@@ -33,7 +33,7 @@ else
     newrev=$3
 fi
 
-export PYTHONPATH=$BBCUSTOM_DIR:$PYTHONPATH
+export PYTHONPATH=$(dirname $BBCUSTOM_DIR):$PYTHONPATH
 
 new=$(mktemp)
 old=$(mktemp)

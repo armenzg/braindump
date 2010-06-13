@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 REPO_FILE='repos.list'
 
@@ -47,8 +48,33 @@ def parse_file(f):
     return repos
 
 
-def hg_op(repo, operation, hg_opts=None, op_opts=None, hg='hg'):
+def hg_op(repo, operation, logfile, hg_opts=None, op_opts=None, hg='hg'):
     '''This function takes a Repository object and performs operation to it'''
+    #the clone, pull and push require the url as an operation argument
+    if operation == 'clone' or operation == 'pull' or operation == 'push':
+        if op_opts == None:
+            op_opts = []
+        op_opts.append(repo.url)
+    #always have noninteractive mode and default to using --time and --verbose
+    if hg_opts == None:
+        hg_opts = ['--noninteractive', '--time', '--verbose']
+    elif '--noninteractive' not in hg_opts:
+        hg_opts.append('--noninteractive')
+    if op_opts == None:
+        op_opts = []
+    command = [hg] + hg_opts + [operation] + op_opts
+    if operation == 'clone':
+        cwd = repo.os_subdir
+    else:
+        cwd = repo.os_repodir
+    logfile.write('Running command:\n%s\nin "%s"\n' % (command, cwd))
+    logfile.flush()
+    rc = subprocess.call(command, cwd=cwd, stdout=logfile, stderr=logfile)
+    logfile.flush()
+    return rc
+
+
+def process_repo(repo):
     try:
        os.makedirs(repo.os_subdir)
     except OSError, a:
@@ -56,37 +82,26 @@ def hg_op(repo, operation, hg_opts=None, op_opts=None, hg='hg'):
             pass #Ignore issues recreating a present file -- might not work elsewhere
         else:
             raise a
-
-    #the clone, pull and push require the url as an operation argument
-    if operation == 'clone' or operation == 'pull' or operation == 'push':
-        if op_opts == None:
-            op_opts = []
-        op_opts.append(repo.url)
-    #always have noninteractive mode and default to using --time
-    if hg_opts == None:
-        hg_opts = ['--noninteractive', '--time']
-    elif '--noninteractive' not in hg_opts:
-        hg_opts.append('--noninteractive')
-    command = [hg] + hg_opts + [operation] + op_opts
     logfile = open(os.path.join(repo.os_subdir, 'hg_%s.log' % repo.repository), 'a+')
-    logfile.write('###Running command %s\n' % command)
+    logfile.write('Processing %s - %s\n' % (repo.repository, time.asctime(time.localtime())))
+    logfile.write('='*80)
+    logfile.write('\n')
     logfile.flush()
-    if operation == 'clone':
-        cwd = repo.os_subdir
+    if not repo.exists():
+        rc = hg_op(repo, 'clone', logfile, op_opts=['--noupdate'])
     else:
-        cwd = repo.os_repodir
-    rc = subprocess.call(command, cwd=cwd, stdout=logfile, stderr=logfile)
-    logfile.write('###Command finished with RC=%d\n' % rc)
+        rc = hg_op(repo, 'pull', logfile)
+    if rc != 0:
+        logfile.write('WARNING: This repository operation returned a non-zero status (%s)\n' % rc)
+    branch_rc = hg_op(repo, 'branches', logfile)
+    if branch_rc != 0:
+        logfile.write('Could not the branches operation on %s' % repo.repository)
+    logfile.write('='*80)
+    logfile.write('\n')
+    logfile.write('Command finished with RC=%s\n' % rc)
     logfile.flush()
     logfile.close()
     return rc
-
-
-def process_repo(repo):
-    if not repo.exists():
-        return hg_op(repo, 'clone', op_opts=['--noupdate'])
-    else:
-        return hg_op(repo, 'pull')
 
 def main():
     if os.path.exists(REPO_FILE):

@@ -1,0 +1,4 @@
+#!/bin/sh
+#make a patch into sql.  this doesn't ensure that the sql is logically correct
+#and is mainly for adding things, not correcting them
+hg diff -I "sql" | grep "^+" | sed 's/^+//' > patch.diff

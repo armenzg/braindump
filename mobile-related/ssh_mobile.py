@@ -40,10 +40,12 @@ def run_on_devices(argv, ips, logfilename, timeout=5):
             passes.append(i)
         else:
             fails.append(i)
-    print 'PASS ON: %s' % ', '.join(passes)
-    print >> logfile, 'PASS ON: %s' % ', '.join(passes)
-    print 'FAIL ON: %s' % ', '.join(passes)
-    print >> logfile, 'FAIL ON: %s' % ', '.join(passes)
+    if len(passes) > 0:
+        print 'PASS ON: %s' % ', '.join(passes)
+        print >> logfile, 'PASS ON: %s' % ', '.join(passes)
+    if len(fails) > 0:
+        print 'FAIL ON: %s' % ', '.join(fails)
+        print >> logfile, 'FAIL ON: %s' % ', '.join(fails)
     logfile.close()
 
 
@@ -63,8 +65,12 @@ if __name__ == "__main__":
 
     if sys.argv[1].startswith('n900'):
         hosts = generate_n900s(sys.argv[1].split(':')[1:])
+        if len(hosts) < 2:
+            hosts = generate_n900s(range(1,51))
     elif sys.argv[1].startswith('n810'):
-        hosts = generate_n900s(sys.argv[1].split(':')[1:])
+        hosts = generate_n810s(sys.argv[1].split(':')[1:])
+        if len(hosts) < 2:
+            hosts = generate_n810s(range(1,51))
     else:
         hosts = sys.argv[1].split(':')
 

@@ -51,8 +51,13 @@ def urlFromResult(result):
     hostname = host.split(":")[0]
     buildername = urllib.quote(buildername)
 
+    # try master
     if hostname == 'production-master02.build.mozilla.org':
         port = 8011
+    # mini masters
+    elif hostname.split('.')[0] in ('talos-master02','test-master01','test-master02'):
+        port = 8012
+    # pm01/pm03
     else:
         port = 8010
 

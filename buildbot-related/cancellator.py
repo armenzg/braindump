@@ -49,7 +49,7 @@ def cancelPendingBuild(brid):
 def urlFromResult(result):
     host, buildername, number = result
     hostname = host.split(":")[0]
-    buildername = urllib.quote(buildername)
+    buildername = urllib.quote(buildername, "")
 
     # try master
     if hostname == 'production-master02.build.mozilla.org':

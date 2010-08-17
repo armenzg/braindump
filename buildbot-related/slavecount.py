@@ -126,12 +126,12 @@ if __name__ == '__main__':
         options.filter = ["connected", "disconnected", "busy", "idle"]
 
     if "test-masters" in options.masters:
-        masters.append("http://talos-master02.build.mozilla.org:8012/buildslaves")
-        masters.append("http://test-master01.build.mozilla.org:8012/buildslaves")
-        masters.append("http://test-master02.build.mozilla.org:8012/buildslaves")
+        masters.append("http://talos-master02.build.mozilla.org:8012/buildslaves?no_builders=1")
+        masters.append("http://test-master01.build.mozilla.org:8012/buildslaves?no_builders=1")
+        masters.append("http://test-master02.build.mozilla.org:8012/buildslaves?no_builders=1")
     if "build-masters" in options.masters:
-        masters.append("http://production-master01.build.mozilla.org:8010/buildslaves")
-        masters.append("http://production-master03.build.mozilla.org:8010/buildslaves")
+        masters.append("http://production-master01.build.mozilla.org:8010/buildslaves?no_builders=1")
+        masters.append("http://production-master03.build.mozilla.org:8010/buildslaves?no_builders=1")
 
     if not masters:
         parser.error("You must specify at least one data source")

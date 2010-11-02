@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import urllib, time
 import sqlalchemy
 from sqlalchemy import *
@@ -106,7 +107,7 @@ def getOptions():
     parser.add_option("-r",           dest="revision", help="revision id")
     parser.add_option("--yes-really", dest="force",    help="yes, perform the cancels", action="store_true")
 
-    defaults = getDefaults()
+    defaults = readDefaults()
 
     parser.set_defaults(**defaults)
 

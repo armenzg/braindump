@@ -3,6 +3,9 @@ import urllib, time
 import sqlalchemy
 from sqlalchemy import *
 
+
+_config_file = os.path.expanduser('~/.cancellator.cfg')
+
 def getPendingBuilds(db, branch, revision):
     br = db.tables['buildrequests']
     bs = db.tables['buildsets']
@@ -71,17 +74,41 @@ def cancelBuild(url):
     # TODO: If we can avoid following the redirect, this will probably be faster
     urllib.urlopen(stopUrl, data)
 
-if __name__ == "__main__":
+def readDefaults():
+    defaults = { 'db':       None,
+                 'branch':   None,
+                 'revision': None,
+                 'force':    False,
+               }
+
+    if os.path.isfile(_config_file):
+        for line in open(_config_file, 'r').readlines():
+            if len(line) > 0 and line[0] not in ('#', ';'):
+                item = line.split('=')
+
+                if len(item) == 2:
+                    key = item[0].strip()
+                    val = item[1].strip()
+
+                    if key.lower() in ('force'):
+                        val = val.lower() in ('true',)
+
+                    defaults[key] = val
+
+    return defaults
+
+def getOptions():
     from optparse import OptionParser
 
     parser = OptionParser()
-    parser.add_option("--db", dest="db", help="db url")
-    parser.add_option("-b", dest="branch")
-    parser.add_option("-r", dest="revision")
-    parser.add_option("--yes-really", dest="force", action="store_true")
-    parser.set_defaults(
-            force=False,
-            )
+    parser.add_option("--db",         dest="db",       help="db url")
+    parser.add_option("-b",           dest="branch",   help="branch name")
+    parser.add_option("-r",           dest="revision", help="revision id")
+    parser.add_option("--yes-really", dest="force",    help="yes, perform the cancels", action="store_true")
+
+    defaults = getDefaults()
+
+    parser.set_defaults(**defaults)
 
     options, args = parser.parse_args()
 
@@ -91,12 +118,15 @@ if __name__ == "__main__":
     if len(options.revision) < 8:
         parser.error("Revision must be at least 8 characters long")
 
+    return options
+
+if __name__ == "__main__":
+    options = getOptions()
+
     engine = sqlalchemy.create_engine(options.db)
     db = sqlalchemy.MetaData()
     db.reflect(bind=engine)
     db.bind = engine
-
-    found = True
 
     for i in range(10):
         found = False

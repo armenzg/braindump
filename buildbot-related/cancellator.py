@@ -50,22 +50,30 @@ def cancelPendingBuild(brid):
 
     res = q.execute()
 
+_portMap = { 'production-master01.build.mozilla.org:/builds/buildbot/builder_master1/master':  '8010',
+             'production-master02.build.mozilla.org:/builds/buildbot/try-trunk-master/master': '8011',
+             'test-master01.build.mozilla.org:/builds/buildbot/tests-master/master':           '8012',
+             'test-master02.build.mozilla.org:/builds/buildbot/tests-master/master':           '8012',
+             'talos-master02.build.mozilla.org:/builds/buildbot/tests-master/master':          '8012',
+             'buildbot-master1.build.mozilla.org:/builds/buildbot/build_master3/master':       '8010',
+             'buildbot-master1.build.mozilla.org:/builds/buildbot/tests_master3/master':       '8011',
+             'buildbot-master1.build.mozilla.org:/builds/buildbot/tests_master4/master':       '8012',
+             'buildbot-master1.build.mozilla.org:/builds/buildbot/build_master4/master':       '8010',
+             'buildbot-master2.build.mozilla.org:/builds/buildbot/tests_master5/master':       '8011',
+             'buildbot-master2.build.mozilla.org:/builds/buildbot/tests_master6/master':       '8012',
+           }
+
 def urlFromResult(result):
     host, buildername, number = result
     hostname = host.split(":")[0]
     buildername = urllib.quote(buildername, "")
 
-    # try master
-    if hostname == 'production-master02.build.mozilla.org':
-        port = 8011
-    # mini masters
-    elif hostname.split('.')[0] in ('talos-master02','test-master01','test-master02'):
-        port = 8012
-    # pm01/pm03
+    if host in _portMap:
+        port = _portMap[host]
     else:
-        port = 8010
+        raise Exception('claimed_by host [%s] not found in port map' % host)
 
-    return "http://%(hostname)s:%(port)i/builders/%(buildername)s/builds/%(number)s" % locals()
+    return "http://%(hostname)s:%(port)s/builders/%(buildername)s/builds/%(number)s" % locals()
 
 def cancelBuild(url):
     stopUrl = url + "/stop"

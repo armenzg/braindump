@@ -82,7 +82,8 @@ def loadRemoteData(url, cache_time=300):
     cacheFile = os.path.join(cacheDir, urllib.quote(url, ""))
     if os.path.exists(cacheFile):
         mtime = os.path.getmtime(cacheFile)
-        if mtime + cache_time > time.time():
+        #if mtime + cache_time > time.time():
+        if True:
             # Use the cache
             logging.info("Using cached file for %s", url)
             return open(cacheFile).read()

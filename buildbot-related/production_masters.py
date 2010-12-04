@@ -1,6 +1,6 @@
 # Global list of hosts and options
 from master_fabric import _make_masters, _make_master_config
-from master_fabric import check, checkconfig, show_revisions, reconfig, update
+from master_fabric import check, checkconfig, show_revisions, reconfig, update, restart
 
 gMasters = [
         {'name': 'pm01-bm',

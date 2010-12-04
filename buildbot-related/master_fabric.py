@@ -100,6 +100,15 @@ def reconfig():
                 run('rm -f *.pyc')
                 run('python buildbot-wrangler.py reconfig .')
 
+def restart():
+    with show('running'):
+        for m in _role_filter(env.masters[env.host_string]):
+            # Copy buildbot-wrangler
+            with cd(m['master_dir']):
+                put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % m['master_dir'])
+                run('rm -f *.pyc')
+                run('python buildbot-wrangler.py restart .')
+
 def stop():
     with show('running'):
         for m in _role_filter(env.masters[env.host_string]):

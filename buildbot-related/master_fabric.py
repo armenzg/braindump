@@ -80,10 +80,10 @@ def update(master):
     with show('running'):
         with cd(master['bbcustom_dir']):
             run('hg pull')
-            run('hg update -r default')
+            run('hg update -r %s' % master['bbcustom_branch'])
         with cd(master['bbconfigs_dir']):
             run('hg pull')
-            run('hg update -r default')
+            run('hg update -r %s' % master['bbconfigs_branch'])
 
 actions = [
     'check',

@@ -5,7 +5,15 @@ Reconfigures the buildbot master in master_dir, waiting for it to finish.
 
 Any errors generated will be printed to stderr.
 """
-import os, sys, time, signal, subprocess
+import os, sys, time, signal, subprocess, urllib
+
+def graceful_stop(port):
+    url = "http://localhost:%s/shutdown" % port
+    data = urllib.urlencode(dict(submit='Clean Shutdown'))
+    try:
+        urllib.urlopen(url, data)
+    except IOError:
+        pass
 
 class Watcher:
     def __init__(self, fname):
@@ -33,6 +41,8 @@ class StopWatcher(Watcher):
             for line in self.fp.readlines():
                 if not self.started:
                     if "Received SIGTERM" in line:
+                        self.started = True
+                    elif "Initiating clean shutdown" in line:
                         self.started = True
                     else:
                         # Don't do anything else until we've actually started
@@ -109,12 +119,12 @@ class ReconfigWatcher(Watcher):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if len(args) != 2:
-        print "Usage: buildbot-reconfig.py restart|reconfig|stop master_dir"
+    if len(args) <= 1 or len(args) >= 4:
+        print "Usage: buildbot-reconfig.py restart|reconfig|stop master_dir [http_port]"
         sys.exit(1)
 
     action = args[0]
-    if action not in ("restart", "reconfig", "stop", "start"):
+    if action not in ("restart", "reconfig", "stop", "start", "graceful_stop", "graceful_restart"):
         print "Unknown action", action
         sys.exit(1)
 
@@ -142,7 +152,7 @@ if __name__ == '__main__':
 
         w = ReconfigWatcher(twistd_log)
         null = open(os.devnull, 'w')
-        p = subprocess.Popen(['buildbot', 'start', master_dir], stdout=null, stderr=null)
+        p = subprocess.Popen(['make', 'start', master_dir], stdout=null, stderr=null)
         w.watch_logfile()
 
     elif action == "stop":
@@ -153,11 +163,30 @@ if __name__ == '__main__':
         else:
             print "master already stopped"
 
+    elif action == "graceful_stop":
+        if pid:
+            w = StopWatcher(twistd_log)
+            graceful_stop(args[2])
+            w.watch_logfile()
+        else:
+            print "master already stopped"
+
+    elif action == "graceful_restart":
+        if pid:
+            w = StopWatcher(twistd_log)
+            graceful_stop(args[2])
+            w.watch_logfile()
+
+        w = ReconfigWatcher(twistd_log)
+        null = open(os.devnull, 'w')
+        p = subprocess.Popen(['make', 'start', master_dir], stdout=null, stderr=null)
+        w.watch_logfile()
+
     elif action == "start":
         if pid:
             print "Master is already running"
         else:
             w = ReconfigWatcher(twistd_log)
             null = open(os.devnull, 'w')
-            p = subprocess.Popen(['buildbot', 'start', master_dir], stdout=null, stderr=null)
+            p = subprocess.Popen(['make', 'start', master_dir], stdout=null, stderr=null)
             w.watch_logfile()

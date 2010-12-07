@@ -1,134 +1,100 @@
-import fabric
-from fabric.api import run, env
+from fabric.api import run
 from fabric.context_managers import cd, hide, show
 from fabric.operations import put
 
-def _make_master_config(name, hostname, role, basedir):
-    return {
-            'name': name,
-            'hostname': hostname,
-            'roles': [role],
-            'basedir': basedir,
-            'master_dir': '%s/master' % basedir,
-            'bbcustom_dir': '%s/buildbotcustom' % basedir,
-            'bbconfigs_dir': '%s/buildbot-configs' % basedir,
-            }
-
-def _role_filter(masters):
-    """Returns a list of masters that have roles in env.roles.  This is
-    required because one host can have multiple masters on it, each with
-    different roles"""
-    if not env.roles:
-        return masters
-
-    retval = []
-    for m in masters:
-        for r in m.get('roles', []):
-            if r in env.roles:
-                retval.append(m)
-                break
-        else:
-            continue
-    return retval
-
-def _make_masters(masters):
-    # Construct the list of hosts and parameters
-    env.masters = {}
-    orig_hosts = env.hosts
-    env.hosts = []
-    for m in masters:
-        if orig_hosts and m['name'] not in orig_hosts:
-            continue
-        # Fix up basedir
-        if 'basedir' not in m:
-            m['basedir'] = m['master_dir']
-
-        # If roles have already been specified, e.g. on the commandline, then don't
-        # add to the list of hosts to operate on
-        if not env.roles:
-            env.hosts.append(m['hostname'])
-        env.masters.setdefault(m['hostname'], []).append(m)
-        roles = m.get('roles', [])
-        for r in roles:
-            env.roledefs.setdefault(r, []).append(m['hostname'])
-
-    fabric.state.output['running'] = False
-    env.user = 'cltbld'
-
-def check():
+def check(master):
     """Checks that the master parameters are valid"""
     with hide('stdout', 'stderr'):
-        run('date')
-        for m in _role_filter(env.masters[env.host_string]):
-            run('test -d %(bbcustom_dir)s' % m)
-            run('test -d %(bbconfigs_dir)s' % m)
-            run('test -d %(master_dir)s' % m)
-            branch = run("hg -R %(bbcustom_dir)s branch" % m)
-            assert branch == "default", branch
+        print run('date')
+        run('test -d %(bbcustom_dir)s' % master)
+        run('test -d %(bbconfigs_dir)s' % master)
+        run('test -d %(master_dir)s' % master)
 
-def checkconfig():
+        assert run('hg -R %(bbcustom_dir)s ident -b' % master) == master['bbcustom_branch']
+        assert run('hg -R %(bbconfigs_dir)s ident -b' % master) == master['bbconfigs_branch']
+
+def checkconfig(master):
     """Runs buildbot checkconfig"""
     check()
     with hide('stdout', 'stderr'):
-        for m in _role_filter(env.masters[env.host_string]):
-            with cd(m['basedir']):
-                try:
-                    run('make checkconfig')
-                    print "%-14s OK" % m['name']
-                except:
-                    print "%-14s FAILED" % m['name']
-                    raise
+        with cd(master['basedir']):
+            try:
+                run('make checkconfig')
+                print "%-14s OK" % master['name']
+            except:
+                print "%-14s FAILED" % master['name']
+                raise
 
-def show_revisions():
+def show_revisions(master):
     """Reports the revisions of buildbotcustom, buildbot-configs"""
-    check()
-    for m in _role_filter(env.masters[env.host_string]):
-        with hide('stdout', 'stderr'):
-            bbcustom_rev = run('hg -R %(bbcustom_dir)s ident' % m)
-            bbconfigs_rev = run('hg -R %(bbconfigs_dir)s ident' % m)
+    with hide('stdout', 'stderr', 'running'):
+        bbcustom_rev = run('hg -R %(bbcustom_dir)s ident -i' % master)
+        bbconfigs_rev = run('hg -R %(bbconfigs_dir)s ident -i' % master)
 
-            bbcustom_rev = bbcustom_rev.split()[0]
-            bbconfigs_rev = bbconfigs_rev.split()[0]
-            print "%-14s %12s %12s" % (m['name'], bbcustom_rev, bbconfigs_rev)
+        bbcustom_rev = bbcustom_rev.split()[0]
+        bbconfigs_rev = bbconfigs_rev.split()[0]
+        print "%-14s %12s %12s" % (master['name'], bbcustom_rev, bbconfigs_rev)
 
-def reconfig():
+def reconfig(master):
     with show('running'):
-        for m in _role_filter(env.masters[env.host_string]):
-            # Copy buildbot-wrangler
-            with cd(m['master_dir']):
-                put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % m['master_dir'])
-                run('rm -f *.pyc')
-                run('python buildbot-wrangler.py reconfig .')
+        with cd(master['basedir']):
+            put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % master['basedir'])
+            run('rm -f *.pyc')
+            run('python buildbot-wrangler.py reconfig %s' % master['master_dir'])
 
-def restart():
+def restart(master):
     with show('running'):
-        for m in _role_filter(env.masters[env.host_string]):
-            # Copy buildbot-wrangler
-            with cd(m['master_dir']):
-                put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % m['master_dir'])
-                run('rm -f *.pyc')
-                run('python buildbot-wrangler.py restart .')
+        with cd(master['basedir']):
+            put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % master['basedir'])
+            run('rm -f *.pyc')
+            run('python buildbot-wrangler.py restart %s' % master['master_dir'])
 
-def stop():
+def graceful_restart(master):
     with show('running'):
-        for m in _role_filter(env.masters[env.host_string]):
-            with cd(m['basedir']):
-                run('echo make stop')
-                # TODO: Wait for process to exit
+        with cd(master['basedir']):
+            put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % master['basedir'])
+            run('rm -f *.pyc')
+            run('python buildbot-wrangler.py graceful_restart %s %s' % (master['master_dir'], master['http_port']))
 
-def start():
+def stop(master):
     with show('running'):
-        for m in _role_filter(env.masters[env.host_string]):
-            with cd(m['basedir']):
-                run('echo rm *.pyc')
-                run('echo make start')
+        with cd(master['basedir']):
+            put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % master['basedir'])
+            run('python buildbot-wrangler.py stop %s' % master['master_dir'])
 
-def update():
+def graceful_stop(master):
     with show('running'):
-        for m in _role_filter(env.masters[env.host_string]):
-            with cd(m['bbcustom_dir']):
-                run('hg pull')
-                run('hg update -r default')
-            with cd(m['bbconfigs_dir']):
-                run('hg pull')
-                run('hg update -r default')
+        with cd(master['basedir']):
+            put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % master['basedir'])
+            run('rm -f *.pyc')
+            run('python buildbot-wrangler.py graceful_stop %s %s' % (master['master_dir'], master['http_port']))
+
+def start(master):
+    with show('running'):
+        with cd(master['basedir']):
+            put('buildbot-wrangler.py', '%s/buildbot-wrangler.py' % master['basedir'])
+            run('rm -f *.pyc')
+            run('python buildbot-wrangler.py start %s' % master['master_dir'])
+
+def update(master):
+    with show('running'):
+        with cd(master['bbcustom_dir']):
+            run('hg pull')
+            run('hg update -r default')
+        with cd(master['bbconfigs_dir']):
+            run('hg pull')
+            run('hg update -r default')
+
+actions = [
+    'check',
+    'checkconfig',
+    'show_revisions',
+    'reconfig',
+    'restart',
+    'graceful_restart',
+    'stop',
+    'graceful_stop',
+    'start',
+    'update',
+    ]
+

@@ -15,7 +15,7 @@ def check(master):
 
 def checkconfig(master):
     """Runs buildbot checkconfig"""
-    check()
+    check(master)
     with hide('stdout', 'stderr'):
         with cd(master['basedir']):
             try:

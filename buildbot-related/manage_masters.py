@@ -4,11 +4,17 @@ from fabric.api import env
 from fabric.context_managers import settings
 
 def run_action_on_master(action, master):
-    action_func = getattr(master_fabric, action)
-    with settings(host_string=master['hostname']):
-        return action_func(master)
+    try:
+        action_func = getattr(master_fabric, action)
+        with settings(host_string=master['hostname']):
+            action_func(master)
+            return True
+    except:
+        return False
 
 if __name__ == '__main__':
+    import sys
+    import urllib
     from optparse import OptionParser
     import textwrap
     try:
@@ -43,7 +49,6 @@ Supported actions:
         parser.error("at least one action is required")
 
     # Load master data
-    import urllib
     all_masters = json.load(urllib.urlopen(options.master_file))
 
     masters = []
@@ -65,17 +70,17 @@ Supported actions:
             for master in masters:
                 run_action_on_master(action, master)
         else:
-            results = {}
             p = multiprocessing.Pool(processes=options.concurrency)
+            results = []
             for master in masters:
-                result = p.apply_async(run_action_on_master, (action, master))
+                result = p.apply_async(run_action_on_master, (action, master) )
+                results.append( (master, result) )
             p.close()
-            p.join()
             failed = False
-            for master, result in results.items():
-                if not result.successful():
+            for master, result in results:
+                if not result.get():
+                    print master['name'], "FAILED"
                     failed = True
-                    print master, "FAILED"
-                    break
+            p.join()
             if failed:
-                break
+                sys.exit(1)

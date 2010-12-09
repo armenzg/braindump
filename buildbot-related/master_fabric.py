@@ -4,14 +4,15 @@ from fabric.operations import put
 
 def check(master):
     """Checks that the master parameters are valid"""
-    with hide('stdout', 'stderr'):
-        print run('date')
+    with hide('stdout', 'stderr', 'running'):
+        date = run('date')
         run('test -d %(bbcustom_dir)s' % master)
         run('test -d %(bbconfigs_dir)s' % master)
         run('test -d %(master_dir)s' % master)
 
         assert run('hg -R %(bbcustom_dir)s ident -b' % master) == master['bbcustom_branch']
         assert run('hg -R %(bbconfigs_dir)s ident -b' % master) == master['bbconfigs_branch']
+        print master['name'], date, "OK"
 
 def checkconfig(master):
     """Runs buildbot checkconfig"""

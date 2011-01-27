@@ -9,9 +9,11 @@ def check(master):
         run('test -d %(bbcustom_dir)s' % master)
         run('test -d %(bbconfigs_dir)s' % master)
         run('test -d %(master_dir)s' % master)
+        run('test -d %(tools_dir)s' % master)
 
         assert run('hg -R %(bbcustom_dir)s ident -b' % master) == master['bbcustom_branch']
         assert run('hg -R %(bbconfigs_dir)s ident -b' % master) == master['bbconfigs_branch']
+        assert run('hg -R %(tools_dir)s ident -b' % master) == master['tools_branch']
         print master['name'], date, "OK"
 
 def checkconfig(master):
@@ -31,10 +33,13 @@ def show_revisions(master):
     with hide('stdout', 'stderr', 'running'):
         bbcustom_rev = run('hg -R %(bbcustom_dir)s ident -i' % master)
         bbconfigs_rev = run('hg -R %(bbconfigs_dir)s ident -i' % master)
+        tools_rev = run('hg -R %(tools_dir)s ident -i' % master)
 
         bbcustom_rev = bbcustom_rev.split()[0]
         bbconfigs_rev = bbconfigs_rev.split()[0]
-        print "%-14s %12s %12s" % (master['name'], bbcustom_rev, bbconfigs_rev)
+        tools_rev = tools_rev.split()[0]
+        print "%-14s %12s %12s %12s" % (master['name'], bbcustom_rev,
+                                        bbconfigs_rev, tools_rev)
 
 def reconfig(master):
     with show('running'):
@@ -85,6 +90,9 @@ def update(master):
         with cd(master['bbconfigs_dir']):
             run('hg pull')
             run('hg update -r %s' % master['bbconfigs_branch'])
+        with cd(master['tools_dir']):
+            run('hg pull')
+            run('hg update -r %s' % master['tools_branch'])
 
 actions = [
     'check',

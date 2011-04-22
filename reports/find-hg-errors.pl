@@ -36,7 +36,7 @@ my $mindate = "$y/$m/$d";
 ($y,$m,$d) = get_ymd(time());
 my $maxdate = "$y/$m/$d";
 # We use 00:07:00 for the time because the times in the db are UTC
-my $query="select CONVERT_TZ(steps.starttime, '+00:00', '-07:00') FROM builds LEFT JOIN (sourcestamps) ON (source_id=sourcestamps.id) LEFT JOIN (builders) ON (builder_id=builders.id) LEFT JOIN (steps) ON (builds.id=build_id) WHERE builders.name LIKE 'tryserver%' AND steps.status='2' AND steps.name like '%hg_update%' AND builds.starttime >= '$mindate 00:07:00' AND builds.starttime <= '$maxdate 00:07:00' ORDER BY steps.starttime;";
+my $query="select CONVERT_TZ(steps.starttime, '+00:00', '-07:00') FROM builds LEFT JOIN (sourcestamps) ON (source_id=sourcestamps.id) LEFT JOIN (builders) ON (builder_id=builders.id) LEFT JOIN (steps) ON (builds.id=build_id) WHERE builders.name LIKE 'try%' AND steps.status='2' AND steps.name like '%hg_update%' AND builds.starttime >= '$mindate 00:07:00' AND builds.starttime <= '$maxdate 00:07:00' ORDER BY steps.starttime;";
 
 my @output = `mysql -u$user -p$pass -h$host -D$db --batch --skip-column-names --execute="$query"`;
 
@@ -69,7 +69,7 @@ foreach my $line (@output) {
     }
 }
 
-print "Tryserver Mercurial failures on $mindate\n";
+print "Try Mercurial failures on $mindate\n";
 my $key;
 foreach $key (sort keys %tally) {
     print "$key: $tally{$key}\n";

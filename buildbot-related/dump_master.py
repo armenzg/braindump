@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 import sys, os, re, pprint
 
+# WithProperties does a poor job at representing itself for our uses here
+from buildbot.process.properties import WithProperties
+
+def reprWithProp(self):
+    if (self.__class__ == WithProperties):
+      classname = "WithProperties"
+    else:
+      classname = self.__class__.__name__
+    return "<%s \"%s\">" % (classname, self.fmtstring)
+
+WithProperties.__repr__ = reprWithPro
+
 def format_args(args):
     keys = sorted(args.keys())
     if 'lazylogfiles' in keys:

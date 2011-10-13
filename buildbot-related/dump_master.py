@@ -11,7 +11,7 @@ def reprWithProp(self):
       classname = self.__class__.__name__
     return "<%s \"%s\">" % (classname, self.fmtstring)
 
-WithProperties.__repr__ = reprWithPro
+WithProperties.__repr__ = reprWithProp
 
 def format_args(args):
     keys = sorted(args.keys())

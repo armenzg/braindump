@@ -1,0 +1,45 @@
+#!/bin/bash
+set -e
+set -x
+
+BASEDIR="/home/bhearsum/github/sync"
+HG="http://hg.mozilla.org"
+REPOS="build/buildbot-configs
+       build/buildapi
+       build/buildbotcustom
+       build/mozharness
+       build/opsi-package-sources
+       build/preproduction
+       build/puppet-manifests
+       build/rpm-sources
+       build/talos
+       build/tools
+       build/partner-repacks"
+GITBASE=git@github.com:mozilla-releng
+
+oldCwd=`pwd`
+cd $BASEDIR
+for repo in $REPOS; do
+    repoName=$(basename $repo)
+    gitRepo="$repo-git"
+    if [ ! -d $repo ]; then
+        mkdir -p $repo
+        hg clone $HG/$repo $repo
+    fi
+    if [ ! -d $gitRepo ]; then
+        mkdir -p $gitRepo
+        pushd $gitRepo
+        git init --bare .
+        git remote add origin $GITBASE/$repoName
+        popd
+    fi
+    pushd $repo
+    hg pull
+    hg bookmark -f -r default master
+    hg push -f $BASEDIR/$gitRepo
+    popd
+    pushd $gitRepo
+    git fetch origin
+    git push -f origin master
+    popd
+done

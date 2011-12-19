@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+# create a new pastbin.m.o entry from STDIN
+
 import urllib, sys
 
 if len(sys.argv) == 2:

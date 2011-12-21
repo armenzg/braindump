@@ -3,9 +3,9 @@ set -x
 set -e
 
 PRODUCT=xulrunner
-VERSION=9.0
+VERSION=9.0.1
 BUILD=1
-TAG=FIREFOX_9_0_RELEASE
+TAG=FIREFOX_9_0_1_RELEASE
 
 KEYDIR=d:/2011-keys
 REPO="releases/mozilla-release"

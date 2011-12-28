@@ -3,7 +3,7 @@ set -x
 set -e
 
 PRODUCT=xulrunner
-VERSION=10.b2
+VERSION=10.0b2
 BUILD=1
 TAG=FIREFOX_10_0b2_RELEASE
 

@@ -1,4 +1,4 @@
-export VERSION=9.0
+export VERSION=10.0b2
 export PRODUCT=fennec
 export BUILD=build1
 

@@ -18,7 +18,7 @@ PYTHONPATH=../lib/python \
 python tuxedo-add.py --config firefox-tuxedo.ini \
   --product $PRODUCT --bouncer-product-name $BRAND --brand-name $BRAND \
   --version $VERSION --old-version $OLDV --milestone $VERSION \
-  --platform linux --platform linux64 --platform macosx64 --platform win32 \
+  --platform linux --platform macosx64 --platform win32 \
   --add-mars \
   --tuxedo-server-url https://bounceradmin.mozilla.com/api/ \
   --username=$USERNAME --password=$PASSWORD

@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+# usage: python fakemaster.py
+#
+# This starts a fake master instance listenting on port 9010
+# You should then connect a buildslave to localhost:9010
+# commands are read from fakemaster's stdin (one line per command) and executed
+# on the buildslave. stderr/stdout from the buildslave are output on
+# fakemaster's stdout/stderr.
+#
+# Original Author: Chris AtLee <catlee@mozilla.com>
+# Licensed under the MPL version 2.0
+
 import sys
 from twisted.internet import reactor, defer
 from twisted.cred import portal, checkers
@@ -28,8 +40,6 @@ class Dispatcher:
         if afactory:
             p = afactory.getPerspective()
         else:
-            # it must be one of the buildslaves: no other names will make it
-            # past the checker
             p = self.master.getPerspective(mind, avatarID)
 
         if not p:

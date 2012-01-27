@@ -1,13 +1,13 @@
 #!/bin/bash
-# Example script which adds SeaMonkey 2.6.1 to Bouncer
+# Example script which adds SeaMonkey to Bouncer
 # Run it from tools/release
 # Adjust variables below including your Bouncer username and password
 # You can also use --credentials-file=/path/to/file which have to be like this:
 # tuxedoUsername = 'user'
 # tuxedoPassword = 'password'
 
-VERSION=2.7b5
-OLDV=2.7b4
+VERSION=2.7
+OLDV=2.6.1
 PRODUCT=seamonkey
 BRAND=SeaMonkey
 

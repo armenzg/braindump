@@ -2,7 +2,7 @@
 # example script to generate clang dmg package
 # in ~/src/clang
 
-REPO_REV=145194
+REPO_REV=149148
 PREFIX=/tools/clang-3.0-$REPO_REV
 
 svn co -r $REPO_REV http://llvm.org/svn/llvm-project/llvm/trunk llvm

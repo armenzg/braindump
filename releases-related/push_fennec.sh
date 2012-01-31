@@ -1,6 +1,6 @@
 #!/bin/bash
-export VERSION=10.0b3
-export BUILDNUM=2
+export VERSION=10.0
+export BUILDNUM=1
 export RD=/home/ftp/pub/mozilla.org/mobile/releases
 export CD=/home/ftp/pub/mozilla.org/mobile/candidates
 

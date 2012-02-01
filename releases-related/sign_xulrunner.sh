@@ -3,8 +3,8 @@ set -x
 set -e
 
 PRODUCT=xulrunner
-VERSION=10.0b3
-BUILD=2
+VERSION=11.0b1
+BUILD=1
 TAG=FIREFOX_10_0b3_RELEASE
 
 KEYDIR=d:/2011-keys

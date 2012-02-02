@@ -5,7 +5,7 @@ set -e
 PRODUCT=xulrunner
 VERSION=11.0b1
 BUILD=1
-TAG=FIREFOX_10_0b3_RELEASE
+TAG=FIREFOX_11_0b1_RELEASE
 
 KEYDIR=d:/2011-keys
 REPO="releases/mozilla-release"

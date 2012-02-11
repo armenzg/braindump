@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-import sys, os, re, pprint
+import sys, os, re, pprint, StringIO
 
 # WithProperties does a poor job at representing itself for our uses here
 from buildbot.process.properties import WithProperties
+
+sio = StringIO.StringIO()
+ppio = pprint.PrettyPrinter(stream=sio)
 
 def reprWithProp(self):
     if (self.__class__ == WithProperties):
@@ -18,8 +21,9 @@ def format_args(args):
     if 'lazylogfiles' in keys:
         keys.remove('lazylogfiles')
     retval = []
-    for k in keys:
-        v = repr(args[k])
+    for k in sorted(keys):
+        v = ppio.pformat(args[k])
+        v = re.sub('\n', ' ', v) # Cleanup pprint newlines
         v = re.sub(' (instance )?at 0x[0-9a-f]+>', '>', v)
         retval.append("'%s': %s" % (k, v))
     return "{" + ", ".join(retval) + "}"

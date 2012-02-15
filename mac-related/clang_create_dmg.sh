@@ -2,15 +2,16 @@
 # example script to generate clang dmg package
 # in ~/src/clang
 
-REPO_REV=149163
+REPO_REV=150477
 PREFIX=/tools/clang-3.0-$REPO_REV
 
 svn co -r $REPO_REV http://llvm.org/svn/llvm-project/llvm/trunk llvm
 svn co -r $REPO_REV http://llvm.org/svn/llvm-project/cfe/trunk clang
+svn co -r $REPO_REV http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt
 
-cd llvm/tools/
-ln -s ../../clang
-cd ../../
+ln -s ../../clang llvm/tools
+ln -s ../../compiler-rt llvm/projects
+
 mkdir build
 cd build
 ../llvm/configure --enable-optimized --prefix=$PREFIX \

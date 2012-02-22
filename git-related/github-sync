@@ -2,7 +2,7 @@
 set -e
 set -x
 
-BASEDIR="/home/bhearsum/github/sync"
+BASEDIR=/home/rail/work/mozilla/repos/sync
 HG="http://hg.mozilla.org"
 REPOS="build/buildbot-configs
        build/buildapi
@@ -15,13 +15,17 @@ REPOS="build/buildbot-configs
        build/talos
        build/tools
        build/partner-repacks"
-GITBASE=git@github.com:mozilla-releng
+GITBASE=/home/rail/work/mozilla/repos/git
 
 oldCwd=`pwd`
 cd $BASEDIR
 for repo in $REPOS; do
     repoName=$(basename $repo)
     gitRepo="$repo-git"
+    if [ ! -d $GITBASE/$repoName ]; then
+        mkdir -p $GITBASE/$repoName
+        git init --bare $GITBASE/$repoName
+    fi
     if [ ! -d $repo ]; then
         mkdir -p $repo
         hg clone $HG/$repo $repo
@@ -30,13 +34,13 @@ for repo in $REPOS; do
         mkdir -p $gitRepo
         pushd $gitRepo
         git init --bare .
-        git remote add origin $GITBASE/$repoName
+        git remote add origin git+ssh://localhost/$GITBASE/$repoName
         popd
     fi
     pushd $repo
     hg pull
     hg bookmark -f -r default master
-    hg push -f $BASEDIR/$gitRepo
+    hg push -f git+ssh://localhost/$BASEDIR/$gitRepo
     popd
     pushd $gitRepo
     git fetch origin

@@ -1,13 +1,13 @@
 #!/bin/bash
-# Example script which adds Thunderbird 9.0 to Bouncer
+# Example script which adds Thunderbird to Bouncer
 # Run it from tools/release
 # Adjust variables below including your Bouncer username and password
 # You can also use --credentials-file=/path/to/file which have to be like this:
 # tuxedoUsername = 'user'
 # tuxedoPassword = 'password'
 
-VERSION=9.0
-OLDV=8.0
+VERSION=11.0b3
+OLDV=11.0b2
 PRODUCT=thunderbird
 BRAND=Thunderbird
 

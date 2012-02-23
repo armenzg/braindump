@@ -6,8 +6,8 @@
 # tuxedoUsername = 'user'
 # tuxedoPassword = 'password'
 
-VERSION=2.8b3
-OLDV=2.8b2
+VERSION=2.8b4
+OLDV=2.8b3
 PRODUCT=seamonkey
 BRAND=SeaMonkey
 

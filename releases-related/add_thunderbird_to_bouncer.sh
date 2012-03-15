@@ -6,8 +6,8 @@
 # tuxedoUsername = 'user'
 # tuxedoPassword = 'password'
 
-VERSION=11.0b4
-OLDV=11.0b3
+VERSION=12.0b1
+OLDV=11.0b5
 PRODUCT=thunderbird
 BRAND=Thunderbird
 

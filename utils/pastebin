@@ -2,7 +2,7 @@
 
 # create a new pastbin.m.o entry from STDIN
 
-import urllib, sys
+import urllib, sys, os
 
 if len(sys.argv) == 2:
     url = "http://%s.pastebin.mozilla.org" % sys.argv[1]
@@ -16,7 +16,7 @@ body = sys.stdin.read()
 params = [
     ('parent_pid', ''),
     ('code2', body),
-    ('poster', ''),
+    ('poster', os.environ.get('PASTEBIN_NAME','')),
     ('expiry', 'd'),
     ('paste', 'Send'),
     ('format', fmt),

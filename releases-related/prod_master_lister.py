@@ -12,7 +12,7 @@ try:
 except ImportError:
     import json
 
-import os, sys
+import os, sets, sys
 
 if len(sys.argv) == 2:
     pm = sys.argv[1]
@@ -41,4 +41,10 @@ for role in these_roles:
 """ % role
     for d in contents:
         if d.get("enabled") and d.get("environment") == "production" and d.get("role") == role:
-            print "http://%s:%d" % (d["hostname"], d.get("http_port", d['pb_port']))
+            print "http://%s:%d" % (d["hostname"], d.get("http_port", d['pb_port'])),
+            releases  = sets.Set(d.get('release_branches'))
+            releases |= sets.Set(d.get('mobile_release_branches'))
+            if role == 'build' and releases:
+                print "# releases: %s" % (', '.join(releases),)
+            else:
+                print

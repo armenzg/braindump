@@ -17,7 +17,7 @@ release_rev=$(hg -R mozilla-release id -i -r default)
 RELEASE_BASE_TAG="RELEASE_BASE_`date +%Y%m%d`"
 RELEASE_TAG="FIREFOX_RELEASE_$VERSION"
 
-hg -R mozilla-beta tag -r $beta_rev -u "$HG_USER" -m "Added tag $RELEASE_BASE_TAG for changeset $beta_rev. CLOSED TREE a=release" $RELEASE_BASE_TAG
+hg -R mozilla-beta tag -r $beta_rev -u "$HG_USER" -m "Added tag $RELEASE_BASE_TAG for changeset $beta_rev. CLOSED TREE a=release DONTBUILD" $RELEASE_BASE_TAG
 hg -R mozilla-beta push -e "ssh -l ffxbld -i ~/.ssh/ffxbld_dsa" ssh://hg.mozilla.org/releases/mozilla-beta
 
 hg -R mozilla-release tag -r $release_rev -u "$HG_USER" -m "Added tag $RELEASE_TAG for changeset $release_rev. CLOSED TREE a=release" $RELEASE_TAG

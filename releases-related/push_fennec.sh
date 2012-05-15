@@ -1,20 +1,23 @@
 #!/bin/bash
-export VERSION=12.0b6
-export BUILDNUM=1
+export VERSION=14.0b1
+export BUILDNUM=3
 export RD=/home/ftp/pub/mozilla.org/mobile/releases
 export CD=/home/ftp/pub/mozilla.org/mobile/candidates
-export PLATFORMS="android-xul"
+export PLATFORMS="android"
 
 set -x
 set -e
 
 mkdir $RD/$VERSION
-cd $RD/$VERSION
+for platform in $PLATFORMS: do
+    cd $CD/$VERSION-candidates/build$BUILDNUM/$platform/
+    LOCALES=`ls -1`
 
-for platform in $PLATFORMS; do
-    for locale in en-US multi ; do
+    cd $RD/$VERSION
+
+    for locale in $LOCALES ; do
         mkdir -p -m 755 $platform/$locale
-        rsync -av --exclude=*gecko*  \
+        rsync -av \
           $CD/$VERSION-candidates/build$BUILDNUM/$platform/$locale/ \
           $RD/$VERSION/$platform/$locale/
     done

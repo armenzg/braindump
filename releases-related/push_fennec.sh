@@ -9,7 +9,7 @@ set -x
 set -e
 
 mkdir $RD/$VERSION
-for platform in $PLATFORMS: do
+for platform in $PLATFORMS; do
     cd $CD/$VERSION-candidates/build$BUILDNUM/$platform/
     LOCALES=`ls -1`
 

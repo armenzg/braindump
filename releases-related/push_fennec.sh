@@ -9,6 +9,10 @@ set -x
 set -e
 
 mkdir $RD/$VERSION
+cd $RD/$VERSION
+mkdir source
+rsync -av $CD/$VERSION-candidates/build$BUILDNUM/source/ \
+  $RD/$VERSION/source
 for platform in $PLATFORMS; do
     cd $CD/$VERSION-candidates/build$BUILDNUM/$platform/
     LOCALES=`ls -1`

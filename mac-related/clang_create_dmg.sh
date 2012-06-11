@@ -16,6 +16,11 @@ rm clang/lib/Headers/cpuid.h
 ln -s ../../clang llvm/tools
 ln -s ../../compiler-rt llvm/projects
 
+# disable building compiler-rt for ios. It requires newer tools than the ones
+# we have on the bots.
+patch -p0 -d clang < clang-no-ios.patch
+patch -p0 -d compiler-rt < compiler-rt-no-ios.patch
+
 mkdir build
 cd build
 ../llvm/configure --enable-optimized --prefix=$PREFIX \

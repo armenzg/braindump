@@ -1,9 +1,9 @@
 #!/bin/bash
-export VERSION=14.0b6
-export BUILDNUM=1
+export VERSION=14.0b7
+export BUILDNUM=2
 export RD=/home/ftp/pub/mozilla.org/mobile/releases
 export CD=/home/ftp/pub/mozilla.org/mobile/candidates
-export PLATFORMS="android android-xul"
+export PLATFORMS="android"
 
 set -x
 set -e

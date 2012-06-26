@@ -1,6 +1,6 @@
 #!/bin/bash
-export VERSION=14.0b8
-export BUILDNUM=3
+export VERSION=14.0
+export BUILDNUM=2
 export RD=/home/ftp/pub/mozilla.org/mobile/releases
 export CD=/home/ftp/pub/mozilla.org/mobile/candidates
 export PLATFORMS="android"

@@ -11,7 +11,7 @@ OLDV=2.10b1
 PRODUCT=seamonkey
 BRAND=SeaMonkey
 
-USERNAME=
+USERNAME=bhearsum
 PASSWORD=
 
 PYTHONPATH=../lib/python \

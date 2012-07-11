@@ -1,6 +1,8 @@
 #!/bin/bash
-export VERSION=14.0
-export BUILDNUM=2
+# VERSION & BUILDNUM are the "version" and "buildNumber" from the
+# release's cofiguration file
+export VERSION=14.0b12
+export BUILDNUM=1
 export RD=/home/ftp/pub/mozilla.org/mobile/releases
 export CD=/home/ftp/pub/mozilla.org/mobile/candidates
 export PLATFORMS="android"

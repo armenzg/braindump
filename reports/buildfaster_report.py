@@ -77,7 +77,7 @@ _os_patterns = [
         ('osx10.7', ['OS X 10.7', 'B2G macosx64_gecko']),
         ('osx10.5', ['Rev3 MacOSX Leopard', 'OS X 10.5.2']),
         ('android', ['Android']),
-        ('linux64', ['Linux x86-64','B2G gb_armv7a_gecko', 'B2G linux32_gecko']),
+        ('linux64', ['Linux x86-64','B2G gb_armv7a_gecko', 'B2G linux32_gecko', 'B2G ics_armv7a_gecko']),
         ('linux32', ['Linux', 'Rev3 Fedora 12', 'fedora16-i386']),
         ('win32', ['WINNT 5.2']),
         ('win64', ['WINNT 6.1 x86-64','B2G win32_gecko']),
@@ -101,6 +101,7 @@ _ignore_patterns = [
         'code coverage',
         'blocklist update',
         'valgrind',
+        'dxr',
         ]
 def ignore_build(buildername):
     return any(p in buildername for p in _ignore_patterns)

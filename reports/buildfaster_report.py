@@ -75,6 +75,7 @@ _os_patterns = [
         ('osx10.6-r4', ['Rev4 MacOSX Snow Leopard']),
         ('osx10.7-r4', ['Rev4 MacOSX Lion']),
         ('osx10.7', ['OS X 10.7', 'B2G macosx64_gecko']),
+        ('osx10.8', ['Rev5 MacOSX Mountain Lion 10.8']),
         ('osx10.5', ['Rev3 MacOSX Leopard', 'OS X 10.5.2']),
         ('android', ['Android']),
         ('linux64', ['Linux x86-64','B2G gb_armv7a_gecko', 'B2G linux32_gecko', 'B2G ics_armv7a_gecko']),

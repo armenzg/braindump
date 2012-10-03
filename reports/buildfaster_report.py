@@ -78,7 +78,7 @@ _os_patterns = [
         ('osx10.8', ['Rev5 MacOSX Mountain Lion 10.8']),
         ('osx10.5', ['Rev3 MacOSX Leopard', 'OS X 10.5.2']),
         ('android', ['Android']),
-        ('linux64', ['Linux x86-64','B2G gb_armv7a_gecko', 'B2G linux32_gecko', 'B2G ics_armv7a_gecko']),
+        ('linux64', ['Linux x86-64','B2G gb_armv7a_gecko', 'B2G linux32_gecko', 'B2G ics_armv7a_gecko', 'b2g_mozilla-central_']),
         ('linux32', ['Linux', 'Rev3 Fedora 12', 'fedora16-i386']),
         ('win32', ['WINNT 5.2']),
         ('win64', ['WINNT 6.1 x86-64','B2G win32_gecko']),
@@ -216,7 +216,7 @@ _worksteps = [
         ('.*peptest', ['run_script']),
         ('Android.*(?!talos)', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg']),
         ('(Linux|OS X|WINNT).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar']),
-        ('b2g', ['compile', 'make_pkg']),
+        ('b2g', ['compile', 'make_pkg', 'run_script']),
         ('B2G', ['compile', 'make_pkg']),
         ]
 def get_worktime(db, buildrow, props):

@@ -214,6 +214,7 @@ _worksteps = [
         ('.*browser-chrome', ['mochitest-browser-chrome']),
         ('.*remote-tdhtml', ['mochitest-browser-chrome']),
         ('.*peptest', ['run_script']),
+        ('.*marionette', ['run_script']),
         ('Android.*(?!talos)', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg']),
         ('(Linux|OS X|WINNT).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar']),
         ('b2g', ['compile', 'make_pkg', 'run_script']),

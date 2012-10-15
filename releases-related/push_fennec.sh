@@ -11,6 +11,12 @@ export PLATFORMS="android"
 set -x
 set -e
 
+if [[ $VERSION != ${VERSION/b[1-9]/} ]]; then
+  export LATEST=latest-beta
+else
+  export LATEST=latest
+fi
+
 mkdir $RD/$VERSION
 cd $RD/$VERSION
 mkdir source
@@ -28,4 +34,8 @@ for platform in $PLATFORMS; do
           $CD/$VERSION-candidates/build$BUILDNUM/$platform/$locale/ \
           $RD/$VERSION/$platform/$locale/
     done
+
+    cd $RD
+    rm $LATEST
+    ln -s $VERSION $LATEST
 done

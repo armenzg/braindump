@@ -202,7 +202,7 @@ def get_masterurl(claimed_by_name):
 _worksteps = [
         ('.*jsreftest', ['jsreftest']),
         ('.*reftest-no-accel', ['opengl-no-accel', 'reftest-no-d2d-d3d']),
-        ('.*reftest', ['reftest']),
+        ('.*reftest', ['reftest', 'run_script']),
         ('.*crashtest', ['crashtest']),
         ('.*xpcshell', ['xpcshell']),
         ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins']),

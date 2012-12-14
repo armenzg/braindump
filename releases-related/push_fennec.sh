@@ -1,8 +1,8 @@
 #!/bin/bash
 # VERSION & BUILDNUM are the "version" and "buildNumber" from the
 # release's cofiguration file
-export VERSION=18.0b3
-export BUILDNUM=1
+export VERSION=18.0b4
+export BUILDNUM=2
 export RD=/home/ftp/pub/mozilla.org/mobile/releases
 export CD=/home/ftp/pub/mozilla.org/mobile/candidates
 export PLATFORMS="android android-armv6"

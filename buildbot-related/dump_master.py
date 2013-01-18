@@ -43,8 +43,16 @@ sys.path.append(abspath)
 os.chdir(abspath)
 execfile(os.path.basename(sys.argv[1]), g)
 
+def sort_builders(b1, b2):
+    if b1['name'] < b2['name']:
+        return -1
+    elif b1['name'] > b2['name']:
+        return 1
+    else:
+        return 0
+
 print "Builders:"
-for b in g['c']['builders']:
+for b in sorted(g['c']['builders'], cmp=sort_builders):
     print b['name'], b['factory'].__class__.__name__
     for s in b['factory'].steps:
         step_class, args = s

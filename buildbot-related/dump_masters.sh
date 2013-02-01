@@ -2,9 +2,7 @@
 set -e
 master_dir=master_dir
 dump_master="$(dirname $0)/dump_master.py"
-if [ "$1" = "-8" ]; then
-    extra_args=-8
-fi
+extra_args="$@"
 for master_name in $(python setup-master.py $extra_args -l); do
     rm -rf $master_dir
     mkdir $master_dir

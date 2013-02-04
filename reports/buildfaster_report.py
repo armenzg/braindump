@@ -205,7 +205,7 @@ _worksteps = [
         ('.*reftest-no-accel', ['opengl-no-accel', 'reftest-no-d2d-d3d']),
         ('.*reftest', ['reftest', 'run_script']),
         ('.*reftest-ipc', ['reftest', 'run_script']),
-        ('.*crashtest', ['crashtest']),
+        ('.*crashtest', ['crashtest', 'run_script']),
         ('.*xpcshell', ['xpcshell', 'run_script']),
         ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins']),
         ('.*jetpack', ['jetpack']),

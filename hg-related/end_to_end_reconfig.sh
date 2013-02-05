@@ -1,11 +1,6 @@
 #!/bin/bash
 set -ex
 
-# Customize this for your own venv
-activate_venv() {
-  source ~/.virtualenvs/buildbot-0.8/bin/activate
-}
-
 # Update and tag the buildbot repos
 for d in buildbot-configs buildbotcustom tools; do 
   rm -rf ${d}
@@ -28,23 +23,23 @@ for d in buildbot-configs buildbotcustom tools; do
   hg merge default
   RETVAL=$?
   if [ ${RETVAL} -eq 255 ]; then
+    popd
     continue
   elif [ ${RETVAL} -ne 0 ]; then 
     exit ${RETVAL}
   fi
   set -e
   hg commit -l preview_changes.txt
+  cp preview_changes.txt ../${d}_preview_changes.txt
   hg push
   popd
 done
 
-# Start the reconfig process
-activate_venv
+echo '|-' > reconfig_update_for_maintenance.wiki
+echo '| in production' >> reconfig_update_for_maintenance.wiki
+echo "| `TZ=America/Los_Angeles date +"%Y-%m-%d %H:%M PT"`" >> reconfig_update_for_maintenance.wiki
+echo '|' >> reconfig_update_for_maintenance.wiki
+grep summary *_preview_changes.txt | awk '{sub (/ r=.*$/,"");print substr($0, index($0,$2))}' | sed 's/[Bb]ug \([0-9]*\):* *-* */\* {{bug|\1}} - /' | sort -u >> reconfig_update_for_maintenance.wiki
+
 cd tools/buildfarm/maintenance
-for action in show_revisions update checkconfig; do 
-    python manage_masters.py -f production-masters.json -R scheduler -R build -R try -R tests ${action}
-done
-# Reconfigs for tests masters take longer, so start them last so they don't block.
-python manage_masters.py -f production-masters.json -R scheduler reconfig
-python manage_masters.py -f production-masters.json -R build -R try reconfig
-python manage_masters.py -f production-masters.json -R tests reconfig
+reconfig_tmux.sh -f

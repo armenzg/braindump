@@ -30,7 +30,7 @@ for platform in $PLATFORMS; do
 
     for locale in $LOCALES ; do
         mkdir -p -m 755 $platform/$locale
-        rsync -av \
+        rsync -av --exclude=host \
           $CD/$VERSION-candidates/build$BUILDNUM/$platform/$locale/ \
           $RD/$VERSION/$platform/$locale/
     done

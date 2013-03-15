@@ -91,6 +91,7 @@ _os_patterns = [
         ('win64', ['WINNT 6.1 x86-64','B2G win32_gecko']),
         ('win7', ['Rev3 WINNT 6.1']),
         ('winxp', ['Rev3 WINNT 5.1']),
+        ('win8', ['Rev3 WINNT 6.2']),
         ]
 def get_platform(buildername):
     for os, patterns in _os_patterns:

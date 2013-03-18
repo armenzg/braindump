@@ -111,6 +111,7 @@ _ignore_patterns = [
         'blocklist update',
         'valgrind',
         'dxr',
+        'hsts',
         ]
 def ignore_build(buildername):
     return any(p in buildername for p in _ignore_patterns)

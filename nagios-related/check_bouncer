@@ -1,5 +1,8 @@
 #!/tools/venvs/nagiosplugin/bin/python
 
+# installed from:
+#   https://hg.mozilla.org/build/braindump/file/default/nagios-related
+
 import nagiosplugin
 import argparse
 import logging

@@ -103,7 +103,7 @@ _os_patterns = [
         ('linux64', ['Linux x86-64', 'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64']),
         ('win32', ['WINNT 5.2']),
         ('win64', ['WINNT 6.1 x86-64']),
-        ('win7', ['Rev3 WINNT 6.1']),
+        ('win7', ['Rev3 WINNT 6.1', 'Windows 7 32-bit']),
         ('winxp', ['Rev3 WINNT 5.1']),
         ('win8', ['WINNT 6.2']),
         ]

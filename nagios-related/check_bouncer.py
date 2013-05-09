@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/tools/venvs/nagiosplugin/bin/python
 
 import nagiosplugin
 import argparse
@@ -8,7 +8,11 @@ import re
 from nagiosplugin.state import Ok, Critical, Unknown
 
 # until we have a py2.7 machine to run this on, include missing routine in py2.6
-# this also requires a version of nagios plugin that works on py2.6
+# this also requires a version of nagios plugin that works on py2.6: use
+#   virtualenv /tools/venvs/nagiosplugin
+#   . /tools/venvs/nagiosplugin/bin/activate
+#   pip install --no-index -e hg+https://bitbucket.org/gocept/nagiosplugin@ecf310f1a9fd#egg=PACKAGE
+#   pip install argparse==1.2.1
 # from http://stackoverflow.com/questions/4814970/subprocess-check-output-doesnt-seem-to-exist-python-2-6-5
 if "check_output" not in dir(subprocess):  # duck punch it in!
     def f(*popenargs, **kwargs):

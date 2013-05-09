@@ -2,6 +2,8 @@
 set -ex
 
 # Update and tag the buildbot repos
+echo -n "Tagging started..."
+date
 for d in buildbot-configs buildbotcustom tools; do 
   rm -rf ${d}
   hg clone ssh://hg.mozilla.org/build/${d}
@@ -40,6 +42,9 @@ echo '| in production' >> reconfig_update_for_maintenance.wiki
 echo "| `TZ=America/Los_Angeles date +"%Y-%m-%d %H:%M PT"`" >> reconfig_update_for_maintenance.wiki
 echo '|' >> reconfig_update_for_maintenance.wiki
 grep summary *_preview_changes.txt | awk '{sub (/ r=.*$/,"");print substr($0, index($0,$2))}' | sed 's/[Bb]ug \([0-9]*\):* *-* */\* {{bug|\1}} - /' | sort -u >> reconfig_update_for_maintenance.wiki
+
+echo -n "Tagging finished..."
+date
 
 cd tools/buildfarm/maintenance
 reconfig_tmux.sh -f

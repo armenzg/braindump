@@ -87,6 +87,7 @@ _os_patterns = [
         ('b2g_unagi_dep', ['b2g_mozilla-central_unagi_dep']),
         ('b2g_armv7a', ['b2g_mozilla-central_ics_armv7a_gecko']),
         ('b2g_armv7a_debug', ['b2g_mozilla-central_ics_armv7a_gecko-debug']),
+        ('b2g_emulator', ['b2g_mozilla-central_emulator']),
         ('b2g_linux32', ['b2g_mozilla-central_linux32_gecko',
                          'b2g_mozilla-central_linux32_gecko_locali|zer']),
         ('b2g_linux64', ['b2g_mozilla-central_linux64_gecko',

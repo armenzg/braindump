@@ -94,7 +94,7 @@ _os_patterns = [
                          'b2g_mozilla-central_linux64_gecko_localizer']),
         ('b2g_osx', ['b2g_mozilla-central_macosx64_gecko',
                      'b2g_mozilla-central_macosx64_gecko_localizer']),
-        ('b2g_unagi', ['b2g_mozilla-central_unagi_nightly']),
+        ('b2g_unagi', ['b2g_mozilla-central_unagi']),
         ('b2g_win32', ['b2g_mozilla-central_win32_gecko',
                        'b2g_mozilla-central_win32_gecko_localizer']),
         ('b2g_panda', ['b2g_panda']),

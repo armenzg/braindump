@@ -234,6 +234,7 @@ _worksteps = [
         ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins', 'run_script']),
         ('.*jetpack', ['jetpack', 'run_script']),
         ('.*mochitests-\d/\d', ['mochitest-plain-\d', 'run_script']),
+        ('.*mochitest-metro-chrome', ['mochitest-metro-chrome', 'run_script']),
         ('.*mochitest-\d', ['mochitest-plain', 'run_script']),
         ('.*mochitest-gl', ['mochitest-plain', 'run_script']),
         ('.*robocop.*', ['mochitest-robocop', 'run_script']),

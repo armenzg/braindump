@@ -9,7 +9,7 @@ import sys
 
 
 TEMPLATE = """node "%(fqdn)s" {
-    buildmaster::buildbot_master {
+    buildmaster::buildbot_master::mozilla {
         "%(name)s":
             http_port => %(http_port)s,
             master_type => "%(master_type)s",
@@ -81,10 +81,10 @@ if __name__ == '__main__':
                         help="Suppress puppet output")
     parser.add_argument("--inventory-csv", default=None,
                         type=argparse.FileType('w'),
-                        help="generate csv to import into inventory system")
+                        help="generate INVENTORY_CSV file to import into inventory system")
     parser.add_argument("--bash", default=None,
                         type=argparse.FileType('w'),
-                        help="generate bash to create AWS instance")
+                        help="generate BASH file to create AWS instance")
     # make --help work
     # from http://stackoverflow.com/questions/8236954/specifying-default-filenames-with-argparse-but-not-opening-them-on-help
     parser._parse_known_args(sys.argv[1:], argparse.Namespace())

@@ -18,5 +18,8 @@ file fennec-$1.multi.android-arm.apk | grep 'Zip archive'
 echo "Downloading arm6 for $1"
 curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$1-candidates/build1/android-armv6/multi/fennec-$1.multi.android-arm-armv6.apk
 file fennec-$1.multi.android-arm-armv6.apk | grep 'Zip archive'
+echo "Downloading x86 for $1"
+curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$1-candidates/build1/android-x86/multi/fennec-$1.multi.android-i386.apk
+file fennec-$1.multi.android-i386.apk | grep 'Zip archive'
 trap "" EXIT
-echo "Success! both downloaded and appear to be Zip archives"
+echo "Success! All three apks downloaded and appear to be Zip archives"

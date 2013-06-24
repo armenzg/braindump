@@ -83,6 +83,7 @@ _os_patterns = [
         ('android_4_x', ['Android 4.']),
         ('android_noion', ['Android no-ionmonkey']),
         ('android', ['Android']),
+        ('b2g_hamachi_dep', ['b2g_mozilla-central_hamachi_dep']),
         ('b2g_inari_dep', ['b2g_mozilla-central_inari_dep']),
         ('b2g_panda_dep', ['b2g_mozilla-central_panda_dep']),
         ('b2g_unagi_dep', ['b2g_mozilla-central_unagi_dep']),

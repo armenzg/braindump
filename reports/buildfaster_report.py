@@ -118,7 +118,7 @@ _os_patterns = [
         ('b2g_armv7a_emu_vm', ['b2g_ics_armv7a_gecko_emulator_vm']),
         ('b2g_armv7a_emu', ['b2g_ics_armv7a_gecko_emulator']),
         ('linux32', ['Linux', 'Rev3 Fedora 12', 'fedora16-i386', 'Ubuntu 12.04', 'Ubuntu VM 12.04', 'Ubuntu HW 12.04']),
-        ('linux64', ['Linux x86-64', 'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64']),
+        ('linux64', ['Linux x86-64', 'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64', 'b2g_ubuntu64_vm']),
         ('win32', ['WINNT 5.2']),
         ('win64', ['WINNT 6.1 x86-64']),
         ('win7', ['Rev3 WINNT 6.1', 'Windows 7 32-bit']),
@@ -155,6 +155,7 @@ _jobtype_patterns = [
         ('debug test', ['.*debug test.*']),
         ('debug build', ['.*leak test build$']),
         ('opt build', ['.*nightly$', '.*build$']),
+        ('b2g test', ['b2g_ubuntu64_vm','B2G.*']),
         ('b2g build', ['b2g.*','B2G.*']),
         ]
 def get_jobtype(buildername):

@@ -1,0 +1,67 @@
+=========================
+Scripts for major IT work
+=========================
+
+These scripts are useful for major IT work, such as dealing with racks
+of machines. While originally developed for handling just mac minis,
+they should also work for any collection of machines.
+
+Common Input
+============
+
+All the scripts take as input a text file with the FQDN of the hosts to
+operate upon. (In column 1 if this is a CSV format file.)
+
+Slavealloc Operations
+=====================
+
+There are three scripts that help with managing the slavealloc enabled
+status of a group of hosts:
+
+    - ``get_enabled_hosts`` record which hosts were enabled prior to the
+      work
+
+    - ``disable_all_hosts`` disable all enabled hosts
+
+    - ``re-enable_hosts`` re-enable only the hosts that were originally
+      enabled
+
+All of these are passed the common input file. They write status files
+into the same directory as the input file. All support the ``--help``
+option for more information.
+
+The slavealloc database parameters are provided via a config file,
+called ``mysql.ini`` in the same directory as the scripts. That file can
+be modified as needed.
+
+All of these files should be placed in a directory on a host with access
+to the database. (Typically, as user ``slavealloc`` on host
+``slavealloc``.)
+
+Host Management Operations
+==========================
+
+There is one fabric script to manage the boxes in terms of shutdown and
+reboot -- ``manage_hosts``. It has three subcommands:
+
+    - ``verify_up`` -- used to ensure boxes are back online. Also
+      can be used to verify proper credentials in advance of "real"
+      usage.
+
+    - ``reboot`` -- reboot all boxes. Typically done after the slaves
+      are re-enabled in slavealloc
+
+    - ``shutdown`` -- shutdown all boxes.
+
+All of these are passed the common input file. All commands use ``root``
+credentials for login. (The ``cltbld`` account doesn't have rights to
+shutdown the box.)
+
+This script is best run from a box the user can ssh into directly with
+ssh agent forwarding. For modern boxes, this will allow passwordless
+execution of the commands. Otherwise, the user is prompted to enter
+passwords as normal with fabric scripts. (Note that for some older
+boxes, there may be several different passwords needed. Yech.)
+
+..
+    vim: ft=rst sw=4 sts=4 ai:

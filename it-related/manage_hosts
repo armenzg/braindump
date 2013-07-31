@@ -1,0 +1,89 @@
+#!/bin/bash
+# vim: sts=4 sw=4 ai:
+
+set -eu
+
+USAGE="usage: ${0##*/} host_file_name
+Generate a custom fabfile.py to perform tasks.
+arguements:
+    host_file_name  name of file of hostnames, with title
+
+options:
+    -h|--help	    this message
+"
+
+# boilerplate
+progdir=$(cd $(dirname $0);/bin/pwd)
+warn() { for m; do echo "$m"; done 2>&1 ; }
+die() { warn "$@"; exit 1; }
+usage() { warn "$@" "${USAGE:-}"; test $# -eq 0; exit $?; }
+cleanup() { test -z "${KEEP:-}" -a -d ${tmpdir:=<NO_SUCH_DIR>} && rm -rf $tmpdir ; }
+trap cleanup EXIT
+
+# configuration
+
+while test $# -gt 0; do
+    case "$1" in
+    -h|--help) usage ;;
+    -*) usage "unsupported option '$1'" ;;
+    *) break ;;
+    esac
+    shift
+done
+
+test $# -ge 1 || usage "wrong number of options '$#'"
+hosts="$1"
+shift
+test -r "$hosts" || usage "can't read '$hosts'"
+# make sure we can access fab (part of fabric)
+hash fab || usage "Required program 'fab' not on path"
+fabfile=$hosts-fab.py
+
+tmpdir=$(mktemp -d /tmp/${0##*/}.$USER.XXXXXX)
+
+if ! test -r $fabfile; then
+    # strip column title, leave as fqdn, but support CSV as input
+    tail -n +2 "$hosts" | cut -d, -f1 > $tmpdir/hosts_to_check
+
+    # create fab file
+    {
+        cat <<EOF
+from fabric.api import env, warn_only, run
+
+env.eagerly_disconnect = True
+env.user = "root"
+env.hosts = [
+EOF
+        # make file pep-8 compliant ;)
+        while read slave_name; do
+            echo "    \"$slave_name\","
+        done < $tmpdir/hosts_to_check
+        echo "]"
+        cat <<EOF
+
+
+def verify_up():
+    with warn_only():
+        run('hostname')
+
+
+def reboot():
+    with warn_only():
+        run('/sbin/reboot')
+
+
+def shut_down():
+    with warn_only():
+        run('shutdown -h now major work')
+EOF
+    } > $tmpdir/fabfile.py
+    mv -i $tmpdir/fabfile.py $fabfile
+    # first time, if no other args specified, list the file
+    test $# -eq 0 && set -- -l
+fi
+
+# run with fab file
+fab --fabfile=$fabfile "$@"
+
+# done
+exit $?

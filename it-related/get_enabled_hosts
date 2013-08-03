@@ -13,14 +13,24 @@ options:
 
 # boilerplate
 progdir=$(cd $(dirname $0);/bin/pwd)
-warn() { for m; do echo "$m"; done 2>&1 ; }
+warn() { for m; do echo "$m"; done 1>&2 ; }
 die() { warn "$@"; exit 1; }
 usage() { warn "$@" "${USAGE:-}"; test $# -eq 0; exit $?; }
 cleanup() { test -z "${KEEP:-}" -a -d ${tmpdir:=<NO_SUCH_DIR>} && rm -rf $tmpdir ; }
 trap cleanup EXIT
 
 # configuration
-mysql_ini=$progdir/mysql.ini
+
+function get_mysql_ini_file() {
+    local db_name=$1
+    local dir=${progdir:-.}
+    local ini_file=$dir/$db_name.ini
+    if ! test -r $ini_file; then
+        cp $ini_file.template $ini_file &>/dev/null ||
+            die "No database specs for '$db_name'"
+    fi
+    echo $ini_file
+}
 
 while test $# -gt 0; do
     case "$1" in
@@ -34,6 +44,7 @@ done
 test $# -eq 1 || usage "wrong number of options '$#'"
 hosts="$1"
 test -r "$hosts" || usage "can't read '$hosts'"
+mysql_ini=$(get_mysql_ini_file slavealloc)
 test -r $mysql_ini || usage "Missing mysql config file '$mysql_ini'"
 
 tmpdir=$(mktemp -d /tmp/${0##*/}.$USER.XXXXXX)

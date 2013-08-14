@@ -4,7 +4,8 @@ set -ex
 # Update and tag the buildbot repos
 echo -n "Tagging started..."
 date
-for d in mozharness buildbot-configs buildbotcustom tools; do 
+#for d in mozharness buildbot-configs buildbotcustom tools; do
+for d in buildbot-configs buildbotcustom tools; do
   rm -rf ${d}
   hg clone ssh://hg.mozilla.org/build/${d}
   if [ "${d}" == "tools" ]; then

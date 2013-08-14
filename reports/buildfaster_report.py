@@ -85,6 +85,8 @@ _os_patterns = [
         ('android', ['Android']),
         ('b2g_hamachi_dep', ['b2g_mozilla-central_hamachi_dep',
                              'b2g_mozilla-central_hamachi_eng_dep']),
+        ('b2g_helix_dep', ['b2g_mozilla-central_helix_dep',
+                           'b2g_mozilla-central_helix_eng_dep']),
         ('b2g_inari_dep', ['b2g_mozilla-central_inari_dep',
                            'b2g_mozilla-central_inari_eng_dep']),
         ('b2g_leo_dep', ['b2g_mozilla-central_leo_dep',

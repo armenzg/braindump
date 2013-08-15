@@ -106,6 +106,8 @@ _os_patterns = [
                      'b2g_mozilla-central_macosx64_gecko_localizer']),
         ('b2g_hamachi', ['b2g_mozilla-central_hamachi_nightly',
                          'b2g_mozilla-central_hamachi_eng_nightly']),
+        ('b2g_helix', ['b2g_mozilla-central_helix_nightly',
+                       'b2g_mozilla-central_helix_eng_nightly']),
         ('b2g_inari', ['b2g_mozilla-central_inari_nightly',
                        'b2g_mozilla-central_inari_eng_nightly']),
         ('b2g_leo', ['b2g_mozilla-central_leo_nightly',

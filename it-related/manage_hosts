@@ -37,34 +37,53 @@ shift
 test -r "$hosts" || usage "can't read '$hosts'"
 # make sure we can access fab (part of fabric)
 hash fab || usage "Required program 'fab' not on path"
-fabfile=$hosts-fab.py
+# python doesn't like module names with dots, convert any extension
+fabfile=${hosts//./-}-fab.py
 
 tmpdir=$(mktemp -d /tmp/${0##*/}.$USER.XXXXXX)
 
-if ! test -r $fabfile; then
+if test $hosts -nt $fabfile -o ! -r $fabfile; then
     # strip column title, leave as fqdn, but support CSV as input
     tail -n +2 "$hosts" | cut -d, -f1 > $tmpdir/hosts_to_check
 
     # create fab file
     {
         cat <<EOF
-from fabric.api import env, warn_only, run
+from fabric.api import env, warn_only, run, local, quiet
+from fabric import state
 
+state.output['running'] = False
 env.eagerly_disconnect = True
+env.skip_bad_hosts = True
+env.connection_attempts = 3
 env.user = "root"
 env.hosts = [
 EOF
         # make file pep-8 compliant ;)
         while read slave_name; do
-            echo "    \"$slave_name\","
+            # handle commented out host names
+            host="${slave_name#\#}"
+            if test "${slave_name}" != "${host}" ; then
+                leader='#'
+            else
+                leader=''
+            fi
+            echo "    ${leader}\"$host\","
         done < $tmpdir/hosts_to_check
         echo "]"
         cat <<EOF
 
 
+def ping():
+    with quiet():
+        if local('ping -c 1 %(host)s' % env).failed:
+            print "%(host)s not pingable" % env
+
+
 def verify_up():
-    with warn_only():
-        run('hostname')
+    with quiet():
+        if run('exit').failed:
+            print "%(host)s FAIL" % env
 
 
 def reboot():
@@ -77,10 +96,10 @@ def shut_down():
         run('shutdown -h now major work')
 EOF
     } > $tmpdir/fabfile.py
-    mv -i $tmpdir/fabfile.py $fabfile
-    # first time, if no other args specified, list the file
-    test $# -eq 0 && set -- -l
+    mv $tmpdir/fabfile.py $fabfile
 fi
+# if no other args specified, list the file
+test $# -eq 0 && set -- -l
 
 # run with fab file
 fab --fabfile=$fabfile "$@"

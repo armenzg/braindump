@@ -257,7 +257,7 @@ _worksteps = [
         ('.*crashtest', ['crashtest', 'run_script']),
         ('.*xpcshell', ['xpcshell', 'run_script']),
         ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins', 'run_script']),
-        ('.*jetpack', ['jetpack', 'run_script']),
+        ('.*jetpack', ['jetpack', 'run_script', 'testpkgs', 'testaddons']),
         ('.*mochitests-\d/\d', ['mochitest-plain-\d', 'run_script']),
         ('.*mochitest-metro-chrome', ['mochitest-metro-chrome', 'run_script']),
         ('.*mochitest-\d', ['mochitest-plain', 'run_script']),

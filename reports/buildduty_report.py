@@ -44,7 +44,13 @@ def generateHTMLHeader():
 """ % now
     return header
 
-def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False):
+def generateInPageLinks(page_sections):
+    links = " | ".join("<a href=\"#%s\">%s</a>" % (page_section['name'], 
+                                                   page_section['title']) for page_section in page_sections)
+    links += "\n<hr/>\n"
+    return links
+
+def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, links=""):
     strike_open = ''
     strike_close = ''
     if strike_deps:
@@ -66,8 +72,11 @@ def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False):
             table = table[:-2]
         table += "</td></tr>\n"
     table += "</table>\n\n"
-    table_header = "<strong>%s</strong> | <a target=\"builddutybugzilla\" href=\"https://bugzilla.mozilla.org/buglist.cgi?bug_id=%s\"><small>(View list in bugzilla)</a></small>\n" % \
-        (title, ','.join(str(bug.id) for bug in bugs))
+    table_header = "<strong>%s</strong> <a name =\"%s\" target=\"builddutybugzilla\" href=\"https://bugzilla.mozilla.org/buglist.cgi?bug_id=%s\"><small>(View list in bugzilla)</a></small>" % \
+        (title, table_id, ','.join(str(bug.id) for bug in bugs))
+    if links != "":
+        table_header += " | <small>%s</small>" % links
+    table_header += "\n"
 
     return table_header + table
 
@@ -131,18 +140,38 @@ if __name__ == "__main__":
 
     f = open(html_file, 'w')
     f.write(generateHTMLHeader())
-    
+
+    no_deps_desc = {'name': 'nodeps',
+                    'title': 'No dependencies (likely new bugs)'}
+    deps_resolved_desc = {'name': 'depsresolved',
+                          'title': 'All dependencies resolved'}
+    deps_open_desc = {'name': 'depsopen',
+                      'title': 'Open dependencies'}
+
+    in_page_links = generateInPageLinks([{'name': 'nodeps',
+                                          'title': 'No dependencies (likely new bugs)'},
+                                        ])
+
     f.write(generateBugTable('nodeps',
                              'No dependencies (likely new bugs)', 
-                             no_deps) + '\n')
+                             no_deps,
+                             links=generateInPageLinks([deps_resolved_desc,
+                                                        deps_open_desc])
+                             ) + '\n')
     
     f.write(generateBugTable('depsresolved',
                              'All dependencies resolved', 
                              deps_resolved,
-                             strike_deps=True) + '\n')
+                             strike_deps=True,
+                             links=generateInPageLinks([no_deps_desc,
+                                                        deps_open_desc])
+                             ) + '\n')
     
     f.write(generateBugTable('depsopen',
                              'Open dependencies', 
-                             deps_open) + '\n')
+                             deps_open,
+                             links=generateInPageLinks([no_deps_desc,
+                                                        deps_resolved_desc])
+                             ) + '\n')
     
     f.write(generateHTMLFooter())

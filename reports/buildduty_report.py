@@ -41,6 +41,11 @@ def generateHTMLHeader():
   </head>
 
   <body class="noscript">
+    <div id="topbar">
+      <div id="title" class="dropdown"><a href="./index.html">Slave Health</a></div>
+    </div>
+
+    <div class="container">
 """ % now
     return header
 
@@ -90,7 +95,9 @@ $("#depsopen").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 });
 </script>
 
-</body>
+    </div>
+
+  </body>
 </html>
 """
     return footer

@@ -99,14 +99,14 @@ def main(manifests_dir, new_branch, push=False):
     for name, r in repos.iteritems():
         revision = r["revision"]
         if os.path.isdir(name):
-            log.info("pulling %s", name)
-            sh.git.pull(_cwd=name)
+            log.info("fetching %s", name)
+            sh.git.fetch(_cwd=name)
         else:
             fetch = r["fetch"]
             # ssh remotes
             fetch = fetch.replace("git://github.com/", "git@github.com:")
             log.info("cloning %s from %s", name, fetch)
-            sh.git.clone(r["fetch"], name)
+            sh.git.clone(fetch, name)
 
         try:
             # try to resolve branch
@@ -120,8 +120,8 @@ def main(manifests_dir, new_branch, push=False):
 
         if push:
             log.info("pushing %s", name)
-            sh.git.push("--dry-run", "origin",
-                        "%s:%s" % (new_branch, new_branch), _cwd=name)
+            sh.git.push("origin", "%s:%s" % (new_branch, new_branch),
+                        _cwd=name)
         for m in listdir(manifests_dir, ".xml"):
             f_path = os.path.join(manifests_dir, m)
             text = file(f_path).read()

@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 skip_repos = (
     'gaia',  # branched separately
     'gecko',  # branched by syncyng from HG
-    'hardware_qcom_display',  # not branching because optimus-l5.xml and
-    # wasabi.xml otoro.xml use conflicting ics_chocolate and
+    'hardware_qcom_display',  # not branching because optimus-l5.xml,
+    # wasabi.xml and otoro.xml use conflicting ics_chocolate and
     # ics_chocolate_rb4.2 branches
 )
 
@@ -51,7 +51,7 @@ def get_all_repos(manifests_dir):
                           fetch)
                 remotes[name] = fetch
             else:
-                log.debug("Ignoring %s, because I canon push to %s", name,
+                log.debug("Ignoring %s, because I cannot push to %s", name,
                           fetch)
         for p in root.iter('project'):
             name, remote = p.attrib['name'], p.attrib.get('remote')
@@ -116,15 +116,12 @@ def main(manifests_dir, new_branch, push=False):
         except sh.ErrorReturnCode_1:
             log.info("Creating %s branch in %s based on %s", new_branch, name,
                      revision)
-            # FIXME: uncomment the following to branch
-            #sh.git.branch(new_branch, "origin/%s" % revision, _cwd=name)
+            sh.git.branch(new_branch, "origin/%s" % revision, _cwd=name)
 
-        # PUSH
         if push:
             log.info("pushing %s", name)
-            # FIXME: uncomment the line below to push for realz
-            #sh.git.push("--dry-run", "origin",
-                        #"%s:%s" % (new_branch, new_branch), _cwd=name)
+            sh.git.push("--dry-run", "origin",
+                        "%s:%s" % (new_branch, new_branch), _cwd=name)
         for m in listdir(manifests_dir, ".xml"):
             f_path = os.path.join(manifests_dir, m)
             text = file(f_path).read()

@@ -10,14 +10,21 @@ logging.basicConfig(
     format='%(asctime)-15s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
-skip_repos = ('gaia', 'gecko')
+skip_repos = (
+    'gaia',  # branched separately
+    'gecko',  # branched by syncyng from HG
+    'hardware_qcom_display',  # not branching because optimus-l5.xml and
+    # wasabi.xml otoro.xml use conflicting ics_chocolate and
+    # ics_chocolate_rb4.2 branches
+)
 
 
 def listdir(directory, pattern=None):
     ls = os.listdir(directory)
     # filter out everything except file (even symlinks)
     ls = [f for f in ls
-          if os.path.isfile(os.path.join(directory, f))]
+          if os.path.isfile(os.path.join(directory, f))
+          and not os.path.islink(os.path.join(directory, f))]
     if pattern:
         ls = [f for f in ls if re.search(pattern, f)]
     return ls
@@ -26,15 +33,26 @@ def listdir(directory, pattern=None):
 def get_all_repos(manifests_dir):
     repos = {}
     for manifest in listdir(manifests_dir, ".xml"):
+        log.info("processing %s", manifest)
         tree = ET.parse(os.path.join(manifests_dir, manifest))
         root = tree.getroot()
+        default = root.find("default")
+        if default is not None:
+            default_revison = default.attrib["revision"]
+        else:
+            default_revison = None
         remotes = {}
         for r in root.iter('remote'):
             name, fetch = r.attrib['name'], r.attrib['fetch']
             # we can branch git://github.com/mozilla-b2g/ and
             # git://github.com/mozilla/
             if 'github.com/mozilla' in fetch:
+                log.debug("I'll process %s, because I can push to %s", name,
+                          fetch)
                 remotes[name] = fetch
+            else:
+                log.debug("Ignoring %s, because I canon push to %s", name,
+                          fetch)
         for p in root.iter('project'):
             name, remote = p.attrib['name'], p.attrib.get('remote')
             # gaia vs gaia.git
@@ -46,19 +64,33 @@ def get_all_repos(manifests_dir):
                 revision = p.attrib.get("revision")
                 if not revision:
                     log.warn("no revision set for %s in %s", name, manifest)
+                    if default_revison:
+                        log.warn("%s: %s, using default revision (%s)",
+                                 manifest, name, default_revison)
+                        revision = default_revison
                 if revision and \
                    repos.get(name, {}).get("revision") and \
                    repos[name]["revision"] != revision:
                     # prefer master
                     if revision == "master":
                         repos[name]["revision"] = revision
-                    log.warn("revision conflict. %s: existing rev %s, new %s",
-                             name, repos[name]["revision"], revision)
+                    repos[name]["manifests"].append(manifest)
+                    repos[name]["revisions"].append(revision)
+                    log.warn(
+                        "revision conflict in %s. %s: existing rev %s, new %s %s",
+                        repos[name]["manifests"], name,
+                        repos[name]["revision"], revision,
+                        repos[name]["revisions"])
                 else:
                     repos[name] = {
                         "fetch": "%s%s.git" % (remotes[remote], name),
-                        "revision": revision
+                        "revision": revision,
+                        "revisions": [revision],
+                        "manifests": [manifest]
                     }
+    for name, r in repos.iteritems():
+        if r["revision"] is None:
+            log.warn("Sanity: No revision set for %s %s", name, r["fetch"])
     return repos
 
 
@@ -100,8 +132,21 @@ def main(manifests_dir, new_branch, push=False):
                 for l in text.splitlines():
                     if re.search('<project.*name="%s(\\.git)?"' % name, l):
                         if "revision=" in l:
-                            l = re.sub('revision=".*?"',
-                                       'revision="%s"' % new_branch, l)
+                            # check if the initial branching point matches
+                            # manifest revision, don't touch otherwise
+                            name = re.search(r'\bname="([^"]+)"',
+                                             l).groups()[0]
+                            revision = re.search(r'\brevision="([^"]+)"',
+                                                 l).groups()[0]
+                            if repos[name]["revision"] == revision:
+                                l = re.sub('revision=".*?"',
+                                           'revision="%s"' % new_branch, l)
+                            else:
+                                log.warn("Not updating %s's %s revision (%s), "
+                                         "because it is ponting to a revision "
+                                         "different from our branchig point "
+                                         "%s.", m, name, revision,
+                                         repos[name]["revision"])
                         else:
                             log.warn("No revision set in %s", l)
                             l = l.replace("/>", 'revision="%s"/>' % new_branch)
@@ -116,14 +161,16 @@ if __name__ == '__main__':
                         help="New branch name")
     parser.add_argument("--push", action="store_true", default=False,
                         help="Push for reals")
-    parser.add_argument("-q", "--quiet", action="store_true",
-                        help="Supress logging messages")
+    parser.add_argument("-v", "--verbose", action="count",
+                        help="Verbose mode")
 
     args = parser.parse_args()
-    if not args.quiet:
+    if args.verbose == 1:
+        log.setLevel(logging.INFO)
+    elif args.verbose >= 2:
         log.setLevel(logging.DEBUG)
     else:
-        log.setLevel(logging.ERROR)
+        log.setLevel(logging.WARNING)
 
     main(manifests_dir=args.manifests_dir, new_branch=args.branch,
          push=args.push)

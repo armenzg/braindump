@@ -43,6 +43,8 @@ def generateHTMLHeader():
   <body class="noscript">
     <div id="topbar">
       <div id="title" class="dropdown"><a href="./index.html">Slave Health</a></div>
+      <div class="dropdown separator"> &gt; </div>
+      <div id="builddutyreport" class="dropdown">Buildduty Report</div>
     </div>
 
     <div class="container">

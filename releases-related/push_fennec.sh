@@ -31,6 +31,9 @@ for platform in $PLATFORMS; do
     for locale in $LOCALES ; do
         mkdir -p -m 755 $platform/$locale
         rsync -av --exclude=host \
+          --exclude=gecko-unsigned-unaligned.apk --exclude=robocop.apk \
+          --exclude=*symbols.zip --exclude=*tests.zip --exclude=jsshell*.zip \
+          --exclude=*.txt --exclude=*.json \
           $CD/$VERSION-candidates/build$BUILDNUM/$platform/$locale/ \
           $RD/$VERSION/$platform/$locale/
     done

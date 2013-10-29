@@ -145,16 +145,10 @@ def get_platform(buildername):
 
 _ignore_patterns = [
         'l10n',
-        'Maemo',
-        'Linux RPM',
-        'Mobile Desktop',
         'hg bundle',
         'xulrunner',
-        'shark',
-        'code coverage',
         'blocklist update',
         'valgrind',
-        'dxr',
         'hsts',
         ]
 def ignore_build(buildername):

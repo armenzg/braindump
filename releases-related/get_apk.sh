@@ -31,17 +31,35 @@ while test $# -gt 0; do
 done
 
 test $# -eq 1 || usage "wrong number of arguements '$#'"
+version="$1"
 
 # Pull binaries down, then make sure we got an archive and not a error
 # page
-echo "Downloading arm7 for $1 build $build"
-curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$1-candidates/build${build}/android/multi/fennec-$1.multi.android-arm.apk
-file fennec-$1.multi.android-arm.apk | grep 'Zip archive'
-echo "Downloading arm6 for $1 build $build"
-curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$1-candidates/build${build}/android-armv6/multi/fennec-$1.multi.android-arm-armv6.apk
-file fennec-$1.multi.android-arm-armv6.apk | grep 'Zip archive'
-echo "Downloading x86 for $1 build $build"
-curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$1-candidates/build${build}/android-x86/multi/fennec-$1.multi.android-i386.apk
-file fennec-$1.multi.android-i386.apk | grep 'Zip archive'
+echo "Downloading arm7 for $version build $build"
+curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android/multi/fennec-$version.multi.android-arm.apk
+file fennec-$version.multi.android-arm.apk | grep 'Zip archive'
+echo "Downloading arm6 for $version build $build"
+curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android-armv6/multi/fennec-$version.multi.android-arm-armv6.apk
+file fennec-$version.multi.android-arm-armv6.apk | grep 'Zip archive'
+echo "Downloading x86 for $version build $build"
+curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android-x86/multi/fennec-$version.multi.android-i386.apk
+file fennec-$version.multi.android-i386.apk | grep 'Zip archive'
 trap "" EXIT
 echo "Success! All three apks downloaded and appear to be Zip archives"
+
+push_script_file=push_fennec.sh
+if test -r $push_script_file; then
+    sed -i.bak \
+        -e "s,^\(export VERSION=\).*$,\1$version," \
+        -e "s,^\(export BUILDNUM=\).*$,\1$build," \
+        $push_script_file
+    ec=$?
+    if test $ec -eq 0; then
+        warn "modified $push_script_file ready for commit" \
+             "please verify the PLATFORMS line before commit:"
+        grep -m 1 "^export PLATFORMS=" $push_script_file
+    else
+        warn "failed to modify $push_script_file ($ec)," \
+             "original in $push_script_file.bak"
+    fi
+fi

@@ -62,17 +62,32 @@ fi
 # find urls from web interface
 web_builder_urls="$(mktemp -t web.XXXXXXXXXX)"
 
+page_cache="$(mktemp -t page_cache.XXXXXXXXXX)"
 # iterate through recent_builds page (100 most recent builds), and pull out only ones with correct sendchange author
 curl "${master_url}/one_line_per_build?numbuilds=${max_records}" 2>/dev/null | sed -n 's/.*<a href="\([^"]*\)">#[0-9][0-9]*<\/a>.*/'"${master_url//\//\\/}"'\/\1/p' | while read url
 do
-    curl "${url}" 2>/dev/null | grep -Fq "${username}" && echo "${url}"
+    curl "${url}" 2>/dev/null > "${page_cache}"
+    if grep -Fq "${username}" "${page_cache}"
+    then
+        result="$(sed -n -e 's/.*class="\([a-z]*\) result".*/\1/p' "${page_cache}" | head -1)"
+        case "${result}" in
+            success)   echo "${url}|0";;
+            warnings)  echo "${url}|1";;
+            failure)   echo "${url}|2";;
+            skipped)   echo "${url}|3";;
+            exception) echo "${url}|4";;
+            retry)     echo "${url}|5";;
+            cancelled) echo "${url}|6";;
+            *)         echo "${url}|?";;
+        esac
+    fi
 done | sort -u > "${web_builder_urls}"
 
 # now query database directly, to see if we get same results, applying same constraint to username
 sqlite3_builder_urls="$(mktemp -t sqlite3.XXXXXXXXXX)"
 
 ssh "${user}@${host}" "sqlite3 '${remote_dir}/master/state.sqlite'"' "select
-    '\'"${master_url}/builders/"\'' || br.buildername || '\''/builds/'\'' || b.number as url
+    '\'"${master_url}/builders/"\'' || br.buildername || '\''/builds/'\'' || b.number as url, br.results
 from
   buildrequests br,
   builds b,
@@ -85,7 +100,20 @@ where
   and bs.sourcestampid = ssc.sourcestampid
   and br.buildsetid = bs.id
   and b.brid=br.id
+  and br.complete = 1
   and br.results is not null"' | sed 's/ /%20/g' | sort -u > "${sqlite3_builder_urls}"
+
+# now fix results to have RETRY result if they were retried...
+
+cat "${sqlite3_builder_urls}" | sed 's/\/[^/]*$//' | sort -u | while read urlprefix
+do
+    cat "${sqlite3_builder_urls}" | grep -F "${urlprefix}" | sed '$d' | while read line
+    do
+        cat "${sqlite3_builder_urls}" | sed "s/^\(${line//\//\\/}.*\)|[0-6]$/\1|5/" > "${sqlite3_builder_urls}."
+        mv "${sqlite3_builder_urls}." "${sqlite3_builder_urls}"
+    done
+done
+
 
 echo "Web interface results:"
 echo "======================"
@@ -102,4 +130,4 @@ echo "<: indicates it is in the web interface only"
 echo ">: indicates it is found in the database only"
 echo
 diff "${web_builder_urls}" "${sqlite3_builder_urls}" | grep '^<\|>' | sort
-rm "${web_builder_urls}" "${sqlite3_builder_urls}"
+rm "${web_builder_urls}" "${sqlite3_builder_urls}" "${page_cache}"

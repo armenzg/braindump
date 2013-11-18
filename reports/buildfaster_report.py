@@ -125,7 +125,7 @@ _os_patterns = [
         ('b2g_win32', ['b2g_mozilla-central_win32_gecko',
                        'b2g_mozilla-central_win32_gecko_localizer']),
         ('b2g_panda', ['b2g_panda']),
-        ('linux64', ['Linux x86-64',
+        ('linux64', ['Linux x86-64', 'linux64',
                      'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64', 'Ubuntu ASAN VM 12.04 x64',
                      'b2g_ubuntu64_vm']),
         ('linux32', ['Linux',

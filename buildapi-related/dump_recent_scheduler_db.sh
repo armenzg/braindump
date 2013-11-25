@@ -14,7 +14,7 @@ USER=buildbot2
 HOST=buildbot-rw-vip.db.scl3.mozilla.com
 DB=buildbot_schedulers
 ORDER=DESC
-TABLE_DIR=status_tables
+TABLE_DIR=scheduler_tables
 
 mkdir -p ${TABLE_DIR}
 

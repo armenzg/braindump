@@ -1,0 +1,81 @@
+#!/bin/bash
+# vim: sts=4 sw=4 ai:
+
+set -eu
+
+USAGE="usage: ${0##*/} host_file_name
+arguements:
+    host_file_name  name of file of hostnames, with title
+
+options:
+    -h|--help	    this message
+"
+
+# boilerplate
+progdir=$(cd $(dirname $0);/bin/pwd)
+warn() { for m; do echo "$m"; done 1>&2 ; }
+die() { warn "$@"; exit 1; }
+usage() { warn "$@" "${USAGE:-}"; test $# -eq 0; exit $?; }
+cleanup() { test -z "${KEEP:-}" -a -d ${tmpdir:=<NO_SUCH_DIR>} && rm -rf $tmpdir ; }
+trap cleanup EXIT
+
+# configuration
+
+function get_mysql_ini_file() {
+    local db_name=$1
+    local dir=${progdir:-.}
+    local ini_file=$dir/$db_name.ini
+    if ! test -r $ini_file; then
+        cp $ini_file.template $ini_file &>/dev/null ||
+            die "No database specs for '$db_name'"
+    fi
+    echo $ini_file
+}
+
+while test $# -gt 0; do
+    case "$1" in
+    -h|--help) usage ;;
+    -*) usage "unsupported option '$1'" ;;
+    *) break ;;
+    esac
+    shift
+done
+
+test $# -eq 1 || usage "wrong number of options '$#'"
+hosts="$1"
+test -r "$hosts" || usage "can't read '$hosts'"
+mysql_ini=$(get_mysql_ini_file slavealloc)
+test -r $mysql_ini || usage "Missing mysql config file '$mysql_ini'"
+
+tmpdir=$(mktemp -d /tmp/${0##*/}.$USER.XXXXXX)
+
+# convert host names (fqdn) to host only, strip column title
+tail -n +2 "$hosts" | cut -d . -f 1 > $tmpdir/hosts_to_check
+
+# create sql query
+{
+    echo "select name from slaves where enabled = '1' and name in ("
+    # don't output comma after final hostname
+    delim=
+    while read slave_name; do
+	echo -en "$delim\"$slave_name\""
+	delim=',\n'
+    done < $tmpdir/hosts_to_check
+    echo
+    echo ");"
+} > $tmpdir/sql_query
+
+# run query
+mysql --defaults-file=$mysql_ini -e "source $tmpdir/sql_query" > $tmpdir/prior_enabled
+
+# if we're here, everything ran okay - save off the results in the same dir as the original host list
+prev_enabled=$hosts.previously_enabled
+
+test -f $prev_enabled && warn "Found older output - you'll be asked what to do"
+mv -i $tmpdir/prior_enabled $prev_enabled
+
+# done
+echo "next step is to run 'disable_all_hosts $hosts'"
+exit $?
+
+

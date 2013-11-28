@@ -1,0 +1,6 @@
+[mysql]
+user=buildslaves
+password
+host=devtools-rw-vip.db.scl3.mozilla.com
+database=buildslaves
+batch

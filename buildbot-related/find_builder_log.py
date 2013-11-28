@@ -36,8 +36,10 @@ def check_master(master):
     found = False
     try:
         if master['enabled'] and master['environment'] == 'production':
+            # look for a latest build using '-1', avoids skipping hosts where
+            # build 0 has already been archived or purged
             pattern = \
-                "http://{hostname}:{http_port}/builders/{builder}/builds/0"
+                "http://{hostname}:{http_port}/builders/{builder}/builds/-1"
             url = pattern.format(**master)
             request = urllib2.Request(url)
             request.get_method = lambda: 'HEAD'

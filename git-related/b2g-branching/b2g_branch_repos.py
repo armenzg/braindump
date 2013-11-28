@@ -13,9 +13,6 @@ log = logging.getLogger(__name__)
 skip_repos = (
     'gaia',  # branched separately
     'gecko',  # branched by syncyng from HG
-    'hardware_qcom_display',  # not branching because optimus-l5.xml,
-    # wasabi.xml and otoro.xml use conflicting ics_chocolate and
-    # ics_chocolate_rb4.2 branches
 )
 
 
@@ -30,7 +27,7 @@ def listdir(directory, pattern=None):
     return ls
 
 
-def get_all_repos(manifests_dir):
+def get_all_repos(manifests_dir, branch_order):
     repos = {}
     for manifest in listdir(manifests_dir, ".xml"):
         log.info("processing %s", manifest)
@@ -71,9 +68,10 @@ def get_all_repos(manifests_dir):
                 if revision and \
                    repos.get(name, {}).get("revision") and \
                    repos[name]["revision"] != revision:
-                    # prefer master
-                    if revision == "master":
-                        repos[name]["revision"] = revision
+                    if revision in branch_order:
+                        if repos[name]["revision"] not in branch_order or \
+                           branch_order.index(revision) < branch_order.index(repos[name]["revision"]):
+                            repos[name]["revision"] = revision
                     repos[name]["manifests"].append(manifest)
                     repos[name]["revisions"].append(revision)
                     log.warn(
@@ -94,8 +92,8 @@ def get_all_repos(manifests_dir):
     return repos
 
 
-def main(manifests_dir, new_branch, push=False):
-    repos = get_all_repos(manifests_dir)
+def main(manifests_dir, new_branch, branch_order, push=False):
+    repos = get_all_repos(manifests_dir, branch_order)
     for name, r in repos.iteritems():
         revision = r["revision"]
         if os.path.isdir(name):
@@ -156,6 +154,10 @@ if __name__ == '__main__':
                         " checkout directory")
     parser.add_argument("-b", "--branch", required=True,
                         help="New branch name")
+    parser.add_argument("--branch-order", required=True,
+                        help="Coma separated list of branches to be used in "
+                        "case if manifests contain conflicting references, "
+                        "e.g. --branch-order v1.2,master")
     parser.add_argument("--push", action="store_true", default=False,
                         help="Push for reals")
     parser.add_argument("-v", "--verbose", action="count",
@@ -168,6 +170,7 @@ if __name__ == '__main__':
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.WARNING)
+    branch_order = args.branch_order.split(",")
 
     main(manifests_dir=args.manifests_dir, new_branch=args.branch,
-         push=args.push)
+         push=args.push, branch_order=branch_order)

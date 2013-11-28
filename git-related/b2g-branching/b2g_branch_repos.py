@@ -13,6 +13,9 @@ log = logging.getLogger(__name__)
 skip_repos = (
     'gaia',  # branched separately
     'gecko',  # branched by syncyng from HG
+    'hardware_qcom_display',  # not branching because optimus-l5.xml,
+    # wasabi.xml and otoro.xml use conflicting ics_chocolate and
+    # ics_chocolate_rb4.2 branches
 )
 
 

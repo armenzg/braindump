@@ -19,95 +19,95 @@ TABLE_DIR=scheduler_tables
 mkdir -p ${TABLE_DIR}
 
 # Dump the schema first.
-mysqldump -d --databases ${DB} -u ${USER} -p -h ${HOST} > ./${TABLE_DIR}/buildbot_schedulers_schema.sql
+mysqldump -d --databases ${DB} -u ${USER} -p -h ${HOST} > ./buildbot_schedulers_schema.sql
 
 # Now dump each table individually.
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY id ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables buildrequests \
-  > ./scheduler_tables/buildrequests.sql
+  > ./${TABLE_DIR}/buildrequests.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY id ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables builds \
-  > ./scheduler_tables/builds.sql
+  > ./${TABLE_DIR}/builds.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY buildsetid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables buildset_properties \
-  > ./scheduler_tables/buildset_properties.sql
+  > ./${TABLE_DIR}/buildset_properties.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY id ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables buildsets \
-  > ./scheduler_tables/buildsets.sql
+  > ./${TABLE_DIR}/buildsets.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY changeid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables change_files \
-  > ./scheduler_tables/change_files.sql
+  > ./${TABLE_DIR}/change_files.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY changeid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables change_links \
-  > ./scheduler_tables/change_links.sql
+  > ./${TABLE_DIR}/change_links.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY changeid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables change_properties \
-  > ./scheduler_tables/change_properties.sql
+  > ./${TABLE_DIR}/change_properties.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY changeid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables changes \
-  > ./scheduler_tables/changes.sql
+  > ./${TABLE_DIR}/changes.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY id ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables patches \
-  > ./scheduler_tables/patches.sql
+  > ./${TABLE_DIR}/patches.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY schedulerid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables scheduler_changes \
-  > ./scheduler_tables/scheduler_changes.sql
+  > ./${TABLE_DIR}/scheduler_changes.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY buildsetid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables scheduler_upstream_buildsets \
-  > ./scheduler_tables/scheduler_upstream_buildsets.sql
+  > ./${TABLE_DIR}/scheduler_upstream_buildsets.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY schedulerid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables schedulers \
-  > ./scheduler_tables/schedulers.sql
+  > ./${TABLE_DIR}/schedulers.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY sourcestampid ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables sourcestamp_changes \
-  > ./scheduler_tables/sourcestamp_changes.sql
+  > ./${TABLE_DIR}/sourcestamp_changes.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY id ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables sourcestamps \
-  > ./scheduler_tables/sourcestamps.sql
+  > ./${TABLE_DIR}/sourcestamps.sql
 
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} \
   --where="1 ORDER BY version ${ORDER} LIMIT ${ROW_LIMIT}" \
   --databases buildbot_schedulers \
   --tables version \
-  > ./scheduler_tables/version.sql
+  > ./${TABLE_DIR}/version.sql

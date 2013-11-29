@@ -19,7 +19,7 @@ TABLE_DIR=status_tables
 mkdir -p ${TABLE_DIR}
 
 # Dump the schema first.
-mysqldump -d --databases ${DB} -u ${USER} -p -h ${HOST} > ./${TABLE_DIR}/buildbot_status_schema.sql
+mysqldump -d --databases ${DB} -u ${USER} -p -h ${HOST} > ./buildbot_status_schema.sql
 
 # Now dump each table individually.
 mysqldump --no-create-info --skip-compact --skip-extended-insert --opt -u ${USER} -p -h ${HOST} --databases ${DB} \

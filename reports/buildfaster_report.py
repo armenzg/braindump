@@ -76,6 +76,7 @@ _os_patterns = [
         ('osx10.7-r4', ['Rev4 MacOSX Lion']),
         ('osx10.7', ['OS X 10.7', 'B2G macosx64_gecko']),
         ('osx10.8', ['Rev5 MacOSX Mountain Lion 10.8']),
+        ('osx10.9', ['Rev5 MacOSX Mavericks 10.9']),
         ('osx10.5', ['Rev3 MacOSX Leopard', 'OS X 10.5.2']),
         ('android_armv6', ['Android Armv6',
                            'Android 2.2 Armv6']),

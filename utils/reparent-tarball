@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Use to recreate a tarball with a new root directory.
+# For example, this is the tarball structure before:
+# a/file1
+# a/file2
+# Reparent the tarball:
+# $ reparent-tarball tarball.tar.xz b
+# Resulting structure:
+# b/file1
+# b/file2
+# Notes:
+#  - currently limited to using the xz compression algorithm.
+#  - uses a hard-coded temporary directory
+#  - stores the current username/group id in the repacked tarball
+
+set -e
+
+tarball=$1
+newparent=$2
+
+if [ -z "$tarball" -o -z "$newparent" ]; then
+    echo "Usage: $0 tarball.tar.xz new-parent-directory" 1>&2
+    exit 1
+fi
+
+if [ ! -f "$tarball" ]; then
+    echo "'$tarball' not found" 1>&2
+    exit 2
+fi
+
+tmpdir=.repack-xxx123
+rm -rf $tmpdir
+mkdir $tmpdir
+tar -C $tmpdir -zxf $tarball
+cnt=`ls -1 $tmpdir | wc -l`
+if [ $cnt -ne 1 ]; then
+    echo "More than one file/directory at the root of the tarball.  Cannot continue." 1>&2
+    exit 3
+fi
+
+mv $tmpdir/* "$tmpdir/$newparent"
+tar -C $tmpdir -cf - . | xz -9 > new-$tarball
+echo "Tarball repacked successfully"

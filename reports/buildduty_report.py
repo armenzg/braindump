@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import datetime
+import re
 from bugzilla.agents import BMOAgent
 from operator import attrgetter
 
@@ -25,7 +26,9 @@ options = {
 }
 
 def generateHTMLHeader():
-    now = datetime.date.today().strftime("%B %d, %Y")
+    now = datetime.datetime.now()
+    now_day = now.strftime("%B %d, %Y")
+    now_precise = now.strftime("%c")
     header = """<!DOCTYPE html>
  <html>
   <head>
@@ -45,10 +48,15 @@ def generateHTMLHeader():
       <div id="title" class="dropdown"><a href="./index.html">Slave Health</a></div>
       <div class="dropdown separator"> &gt; </div>
       <div id="builddutyreport" class="dropdown">Buildduty Report</div>
+      <div class="topbarright">
+        <div id="generated" class="dropdown">
+          Data generated at: <span id="generated">%s</span>
+        </div>
+      </div>
     </div>
 
     <div class="container">
-""" % now
+""" % (now_day, now_precise)
     return header
 
 def generateInPageLinks(page_sections):
@@ -66,10 +74,11 @@ def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, l
     if not css_class:
         css_class="tablesorter"
     table = "<table id=\"{0}\" class=\"{1}\">\n".format(table_id, css_class)
-    table += "<thead><tr><th>Bug ID</th><th>Summary</th><th>Last Updated</th><th>Depends On</th></tr></thead>\n"
+    table += "<thead><tr><th>Bug&nbsp;ID</th><th>Summary</th><th>Last Updated</th><th>Depends On</th></tr></thead>\n"
 
     for bug in sorted(bugs, key=attrgetter('last_change_time'), reverse=False):
-        table += "<tr><td><a href=\"https://bugzil.la/{0}\">Bug {0}</a></td><td><a href=\"https://bugzil.la/{0}\">{1}</a></td><td>{2}</td>".format(bug.id, bug.summary, bug.last_change_time)
+        summary = re.sub(r'(.*) (problem tracking)', r'<a target="_\1_slave_health" href="slave.html?name=\1">\1</a> \2', bug.summary)
+        table += "<tr><td><a href=\"https://bugzil.la/{0}\">Bug&nbsp;{0}</a></td><td>{1}</td><td>{2}</td>\n".format(bug.id, summary, bug.last_change_time)
         table += "<td>"
         if not bug.depends_on:
             table += "None"
@@ -77,7 +86,7 @@ def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, l
             for dep_bug in bug.depends_on: 
                 table += "{0}<a href=\"https://bugzil.la/{1}\">{1}</a>{2}, ".format(strike_open, dep_bug, strike_close)
             table = table[:-2]
-        table += "</td></tr>\n"
+        table += "</td>\n</tr>\n"
     table += "</table>\n\n"
     table_header = "<strong>%s</strong> <a name =\"%s\" target=\"builddutybugzilla\" href=\"https://bugzilla.mozilla.org/buglist.cgi?bug_id=%s\"><small>(View list in bugzilla)</a></small>" % \
         (title, table_id, ','.join(str(bug.id) for bug in bugs))

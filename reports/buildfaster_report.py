@@ -131,7 +131,8 @@ _os_patterns = [
                      'b2g_ubuntu64_vm']),
         ('linux32', ['Linux',
                      'Rev3 Fedora 12', 'fedora16-i386',
-                     'Ubuntu 12.04', 'Ubuntu VM 12.04', 'Ubuntu HW 12.04', 'Ubuntu ASAN VM 12.04']),
+                     'Ubuntu 12.04', 'Ubuntu VM 12.04', 'Ubuntu HW 12.04', 'Ubuntu ASAN VM 12.04',
+                     'b2g_ubuntu32_vm']),
         ('win32', ['WINNT 5.2']),
         ('win64', ['WINNT 6.1 x86-64']),
         ('win7', ['Rev3 WINNT 6.1', 'Windows 7 32-bit']),
@@ -316,12 +317,14 @@ def get_worktime(db, buildrow, props):
             overhead += (step.endtime - step.starttime)
 
     if not matched:
+        print "Workstep not matched."
         print buildername
         for step in steps:
             print step
         assert False
 
     if not worksteps:
+        print "No worksteps found."
         assert False
     #print worktime + overhead
 
@@ -360,6 +363,10 @@ for buildrow in builds:
     jobtype = get_jobtype(props['buildername'])
     suitename = get_suitename(props['buildername'])
 
+    if os is None:
+        print "OS lookup failed"
+    elif jobtype is None:
+        print "Jobtype lookup failed"
     if os is None or jobtype is None:
         print props['buildername']
         assert False, props['buildername']

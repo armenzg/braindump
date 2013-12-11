@@ -6,22 +6,21 @@ import time
 config = {
     "us-east-1": {
         "range": range(1, 200),
-        "domain": "test.releng.use1.mozilla.com",
-        "subnet_ids": ["subnet-8f32cbe5", "subnet-3835cc52", "subnet-ed35cc87",
-                       "subnet-ae35ccc4", "subnet-fb97bc8f", "subnet-ff3542d7",
-                       "subnet-e40e0786", "subnet-7ca5f03a"],
+        "domain": "try.releng.use1.mozilla.com",
+        "subnet_ids": ["subnet-27a9834c", "subnet-39a98352", "subnet-3ea98355",
+                       "subnet-93b285e7", "subnet-e5bacacd", "subnet-ef373f8d",
+                       "subnet-cd83d28b"]
     },
     "us-west-2": {
         "range": range(300, 499),
-        "domain": "test.releng.usw2.mozilla.com",
-        "subnet_ids": ["subnet-d6cba8bf", "subnet-aecba8c7", "subnet-a4cba8cd",
-                       "subnet-be89a2ca"],
+        "domain": "try.releng.usw2.mozilla.com",
+        "subnet_ids": ["subnet-ae48dac7", "subnet-a348daca", "subnet-a448dacd",
+                       "subnet-72b68206"]
     }
 }
 
 slave_types = {
-    "tst-linux32": "tst-linux32-spot-%03i",
-    "tst-linux64": "tst-linux64-spot-%03i",
+    "try-linux64": "try-linux64-spot-%03i",
 }
 
 

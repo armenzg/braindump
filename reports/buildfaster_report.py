@@ -3,66 +3,100 @@ import sqlalchemy as sa
 import re, datetime, csv, urllib
 import time, redis
 import traceback
+import argparse
+import logging
 
 schedulerdb = sa.create_engine("mysql://buildbot_reader2:aequeG4ahtooz0qu@buildbot-ro-vip.db.scl3.mozilla.com/buildbot_schedulers", pool_recycle=60)
 statusdb = sa.create_engine("mysql://buildbot_reader2:aequeG4ahtooz0qu@buildbot-ro-vip.db.scl3.mozilla.com/buildbot", pool_recycle=60)
 
-#import logging
-#logging.getLogger('sqlalchemy.pool').setLevel(logging.INFO)
+builds_sql = """SELECT
+             builders.name as buildername,
+             builds.*,
+             sourcestamps.branch, sourcestamps.revision,
+             masters.url as master_url
+       FROM
+             builds, builders, sourcestamps, masters
+       WHERE
+             builds.master_id = masters.id AND
+             builds.builder_id = builders.id AND
+             builds.source_id = sourcestamps.id AND
+             (
+              sourcestamps.branch LIKE :branchprefix OR
+              sourcestamps.branch LIKE :branchsuffix
+             ) AND
+             builds.starttime >= :startdate AND
+             builds.endtime < :enddate AND
+             builds.result != 5
+       ORDER BY
+             builds.starttime ASC
+"""
+props_sql = """SELECT
+              name, value
+       FROM
+              build_properties, properties
+       WHERE
+              build_properties.property_id = properties.id AND
+              build_properties.build_id = :buildid
+"""
+submittime_sql = """SELECT
+              buildrequests.*, builds.*
+       FROM
+              buildsets, buildrequests, builds
+       WHERE
+              buildrequests.buildsetid = buildsets.id AND
+              builds.brid = buildrequests.id AND
+              builds.number = :number AND
+              buildrequests.buildername = :buildername AND
+              buildrequests.claimed_by_name = :claimed_by_name
+"""
+worksteps_sql = """SELECT * FROM steps WHERE steps.build_id = :buildid"""
 
 R = redis.Redis("redis01.build.mozilla.org")
+
+@sa.event.listens_for(sa.pool.Pool, "checkout")
+def check_connection(dbapi_con, con_record, con_proxy):
+    '''Listener for Pool checkout events that pings every connection before using.
+    Implements pessimistic disconnect handling strategy. See also:
+    http://docs.sqlalchemy.org/en/rel_0_8/core/pooling.html#disconnect-handling-pessimistic'''
+
+    cursor = dbapi_con.cursor()
+    try:
+        cursor.execute("SELECT 1")  # could also be dbapi_con.ping(),
+                                    # not sure what is better
+    except sa.exc.OperationalError, ex:
+        if ex.args[0] in (2006,   # MySQL server has gone away
+                          2013,   # Lost connection to MySQL server during query
+                          2055):  # Lost connection to MySQL server at '%s', system error: %d
+            # caught by pool, which will retry with a new connection
+            raise sa.exc.DisconnectionError()
+        else:
+            raise
 
 def td2secs(td):
     return td.seconds + td.days * 86400
 
-def get_builds(db, branch, startdate, enddate):
-    q = """SELECT
-                builders.name as buildername,
-                builds.*,
-                sourcestamps.branch, sourcestamps.revision,
-                masters.url as master_url
-           FROM
-                builds, builders, sourcestamps, masters
-           WHERE
-                builds.master_id = masters.id AND
-                builds.builder_id = builders.id AND
-                builds.source_id = sourcestamps.id AND
-                (
-                    sourcestamps.branch LIKE :branchprefix OR
-                    sourcestamps.branch LIKE :branchsuffix
-                ) AND
-                builds.starttime >= :startdate AND
-                builds.endtime < :enddate AND
-                builds.result != 5
-           ORDER BY
-                builds.starttime ASC
-        """
+def get_builds(branch, startdate, enddate):
     branchprefix = branch + "%"
     branchsuffix = "%" + branch
+    statusdb_conn = statusdb.connect()
+    return statusdb_conn.execute(builds_q,
+                                 branchprefix=branchprefix,
+                                 branchsuffix=branchsuffix,
+                                 startdate=startdate,
+                                 enddate=enddate
+                                 ).fetchall()
 
-    conn = db.connect()
-
-    return conn.execute(sa.text(q), locals()).fetchall()
-
-def get_props(db, buildrow):
+def get_props(buildrow):
     r_key = "buildfaster:props:%s" % buildrow.id
     retval = R.get(r_key)
     if retval:
         R.set(r_key, retval)
         R.expire(r_key, 86400*2)
         return json.loads(retval)
-    q = """SELECT
-                name, value
-            FROM
-                build_properties, properties
-            WHERE
-                build_properties.property_id = properties.id AND
-                build_properties.build_id = :buildid
-        """
 
     retval = {}
-    conn = db.connect()
-    for k, v in conn.execute(sa.text(q), buildid=buildrow.id).fetchall():
+    statusdb_conn = statusdb.connect()
+    for k, v in statusdb_conn.execute(props_q, buildid=buildrow.id).fetchall():
         if v is not None:
             v = json.loads(v)
         retval[k] = v
@@ -139,6 +173,7 @@ _os_patterns = [
         ('winxp', ['Rev3 WINNT 5.1', 'Windows XP 32-bit']),
         ('win8', ['WINNT 6.2']),
         ]
+
 def get_platform(buildername):
     for os, patterns in _os_patterns:
         for pattern in patterns:
@@ -152,7 +187,10 @@ _ignore_patterns = [
         'blocklist update',
         'valgrind',
         'hsts',
+        'dxr',
+        'br-haz'
         ]
+
 def ignore_build(buildername):
     return any(p in buildername for p in _ignore_patterns)
 
@@ -161,11 +199,12 @@ _jobtype_patterns = [
         ('opt test', ['.*opt test.*']),
         ('talos', ['.*talos.*']),
         ('debug test', ['.*debug test.*']),
-        ('debug build', ['.*leak test build$']),
+        ('debug build', ['.*leak test build$', '.*br-haz.*']),
         ('opt build', ['.*nightly$', '.*build$']),
         ('b2g test', ['b2g_ubuntu64_vm','B2G.*']),
         ('b2g build', ['b2g.*','B2G.*']),
         ]
+
 def get_jobtype(buildername):
     for jobtype, patterns in _jobtype_patterns:
         for pattern in patterns:
@@ -192,37 +231,27 @@ def get_submittime(schedulerdb, buildrow, props):
         except:
             traceback.print_exc()
             R.delete(r_key)
-    q = """SELECT
-                buildrequests.*, builds.*
-            FROM
-                buildsets, buildrequests, builds
-            WHERE
-                buildrequests.buildsetid = buildsets.id AND
-                builds.brid = buildrequests.id AND
-                builds.number = :number AND
-                buildrequests.buildername = :buildername AND
-                buildrequests.claimed_by_name = :claimed_by_name
-            """
 
     master_name = get_master_dbname(buildrow.master_url)
-    conn = schedulerdb.connect()
-    rows = conn.execute(sa.text(q),
-            #branch=buildrow.branch,
-            #revision=buildrow.revision,
-            number=buildrow.buildnumber,
-            buildername=props['buildername'],
-            claimed_by_name=master_name,
-            ).fetchall()
+    schedulerdb_conn = schedulerdb.connect()
+    rows = schedulerdb_conn.execute(
+        submittime_q,
+        number=buildrow.buildnumber,
+        buildername=props['buildername'],
+        claimed_by_name=master_name,
+        ).fetchall()
     if len(rows) >= 1:
         # Find the closest starttime
         rows.sort(key=lambda row: abs(datetime.datetime.utcfromtimestamp(row.start_time) - buildrow.starttime))
         retval = rows[0].submitted_at
     elif len(rows) == 0:
-        #print buildrow
-        #print props
-        #print master_name
+        logger.debug(str(buildrow))
+        logger.debug(str(props))
+        logger.debug(str(master_name))
         retval = None
-        #assert False
+        if args.assert_on_missing:
+            assert False
+        return None
     R.set(r_key, retval)
     R.expire(r_key, 86400*2)
     if retval is None:
@@ -273,7 +302,8 @@ _worksteps = [
         ('b2g', ['compile', 'make_pkg', 'run_script']),
         ('B2G', ['compile', 'make_pkg', 'run_script']),
         ]
-def get_worktime(db, buildrow, props):
+
+def get_worktime(buildrow, props):
     r_key = "buildfaster:worktime:%s" % buildrow.id
     retval = R.get(r_key)
     if retval:
@@ -290,20 +320,19 @@ def get_worktime(db, buildrow, props):
         if re.match(builder, buildername):
             break
     else:
-        print "Couldn't determine worksteps for", buildername
+        logger.critical("Couldn't determine worksteps for %s", buildername)
         worksteps = None
 
     worktime = datetime.timedelta()
     overhead = datetime.timedelta()
 
     # Get the steps
-    q = """SELECT * FROM steps WHERE steps.build_id = :buildid"""
-    conn = db.connect()
-    steps = conn.execute(sa.text(q), dict(buildid=buildrow.id)).fetchall()
+    statusdb_conn = statusdb.connect()
+    steps = statusdb_conn.execute(worksteps_q, buildid=buildrow.id).fetchall()
     matched = False
     for step in steps:
         if not worksteps:
-            print step
+            logger.critical(step)
             continue
 
         if any(re.match(ws, step.name) for ws in worksteps):
@@ -317,89 +346,127 @@ def get_worktime(db, buildrow, props):
             overhead += (step.endtime - step.starttime)
 
     if not matched:
-        print "Workstep not matched."
-        print buildername
+        logger.critical("Workstep not matched.")
+        logger.critical(buildername)
         for step in steps:
-            print step
-        assert False
+            logger.critical(step)
+        if args.assert_on_missing:
+            assert False
+        return None
 
     if not worksteps:
-        print "No worksteps found."
-        assert False
-    #print worktime + overhead
+        logger.critical("No worksteps found.")
+        if args.assert_on_missing:
+            assert False
+        return None
+    logger.debug("worktime + overhead: %s", worktime + overhead)
 
     R.set(r_key, td2secs(worktime))
     R.expire(r_key, 86400*2)
     return worktime
 
-import sys
-masters = json.load(urllib.urlopen("http://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("csvfile", type=str, help="CSV outputfile")
+    parser.add_argument("-v", "--verbose", help="Output debug info",
+                        action="store_true")
+    parser.add_argument("-a", "--assert_on_missing", help="Assert on missing lookups",
+                        action="store_true")
+    args = parser.parse_args()
 
-today = datetime.datetime.now().strftime("%Y-%m-%d")
-start = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+    logger = logging.getLogger('buildfaster')
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        ch.setLevel(logging.DEBUG)
+    else :
+        logger.setLevel(logging.INFO)
+        ch.setLevel(logging.INFO)
+    logger.addHandler(ch)
 
-t = time.time()
-builds = get_builds(statusdb, 'mozilla-central', start, today)
-#print "get_builds", time.time() - t
+    if not args.csvfile:
+        logger.critical("csvfile not set!")
+        assert args.csvfile
 
-output = csv.writer(open(sys.argv[1], 'w'))
+    # Do db query setup
+    builds_q = sa.text(builds_sql)
+    props_q = sa.text(props_sql)
+    submittime_q = sa.text(submittime_sql)
+    worksteps_q =  sa.text(worksteps_sql)
 
-output.writerow(['submitted_at', 'revision', 'os', 'jobtype', 'suitename', 'uid', 'results', 'wait_time', 'start_time', 'finish_time', 'elapsed', 'work_time', 'builder_name', 'slave_name'])
-for buildrow in builds:
-    t = time.time()
-    props = get_props(statusdb, buildrow)
-    #print "get_props", time.time() - t
-    if 'buildername' not in props:
-        #print "Skipping"
-        #print buildrow
-        #print props
-        continue
+    masters = json.load(urllib.urlopen("http://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
 
-    if ignore_build(props['buildername']):
-        continue
-
-    uid = props.get('builduid')
-    os = get_platform(props['buildername'])
-    jobtype = get_jobtype(props['buildername'])
-    suitename = get_suitename(props['buildername'])
-
-    if os is None:
-        print "OS lookup failed"
-    elif jobtype is None:
-        print "Jobtype lookup failed"
-    if os is None or jobtype is None:
-        print props['buildername']
-        assert False, props['buildername']
+    start = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
 
     t = time.time()
-    submitted_at = get_submittime(schedulerdb, buildrow, props)
-    #print "get_submittime", time.time() - t
-    if not submitted_at:
-        continue
+    builds = get_builds('mozilla-central', start, today)
+    logger.debug("get_builds: %s", str(time.time() - t))
 
-    started_at = buildrow.starttime
-    finished_at = buildrow.endtime
-    revision = get_revision(buildrow)
-    wait_time = started_at - submitted_at
-    elapsed_time = finished_at - started_at
-    results = buildrow.result
-    t = time.time()
-    work_time = get_worktime(statusdb, buildrow, props)
-    buildername = props['buildername']
-    slavename = props['slavename']
-    #print "get_worktime", time.time() - t
+    output = csv.writer(open(args.csvfile, 'w'))
+    output.writerow(['submitted_at', 'revision', 'os', 'jobtype', 'suitename', 'uid', 'results', 'wait_time', 'start_time', 'finish_time', 'elapsed', 'work_time', 'builder_name', 'slave_name'])
 
-    if True:
+    for buildrow in builds:
+        t = time.time()
+        props = get_props(buildrow)
+        logger.debug("get_props: %s", str(time.time() - t))
+        if 'buildername' not in props:
+            logger.debug("Skipping...")
+            logger.debug(str(buildrow))
+            logger.debug(str(props))
+            continue
+
+        if ignore_build(props['buildername']):
+            continue
+
+        uid = props.get('builduid')
+        os = get_platform(props['buildername'])
+        jobtype = get_jobtype(props['buildername'])
+        suitename = get_suitename(props['buildername'])
+
+        if os is None or jobtype is None:
+            if os is None:
+                logger.critical("OS lookup failed")
+            elif jobtype is None:
+                logger.critical("Jobtype lookup failed")
+            logger.critical(props['buildername'])
+            if args.assert_on_missing:
+                assert False, props['buildername']
+            continue
+
+        t = time.time()
+        submitted_at = get_submittime(schedulerdb, buildrow, props)
+        logger.debug("get_submittime: %s", str(time.time() - t))
+        if not submitted_at:
+            continue
+
+        started_at = buildrow.starttime
+        finished_at = buildrow.endtime
+        revision = get_revision(buildrow)
+        if revision is None:
+            if args.assert_on_missing:
+                assert False
+            continue
+        wait_time = started_at - submitted_at
+        elapsed_time = finished_at - started_at
+        results = buildrow.result
+        t = time.time()
+        work_time = get_worktime(buildrow, props)
+        if work_time is None:
+            if args.assert_on_missing:
+                assert False
+            continue
+
+        buildername = props['buildername']
+        slavename = props['slavename']
+        logger.debug("get_worktime: %s", str(time.time() - t))
+
         output.writerow([
             submitted_at.strftime("%Y-%m-%dT%H:%M:%S"), revision, os, jobtype,
             suitename, uid, results, wait_time,
             started_at.strftime("%Y-%m-%dT%H:%M:%S"),
             finished_at.strftime("%Y-%m-%dT%H:%M:%S"), elapsed_time, work_time,
             buildername, slavename])
-    #print buildrow.buildername, uid, os, jobtype
-    if os is None:
-        break
-    if jobtype is None:
-        break
-    if revision is None:
-        break
+        logger.debug("%s %s %s %s", buildrow.buildername, uid, os, jobtype)

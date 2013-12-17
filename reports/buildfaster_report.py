@@ -320,45 +320,44 @@ def get_worktime(buildrow, props):
         if re.match(builder, buildername):
             break
     else:
-        logger.critical("Couldn't determine worksteps for %s", buildername)
+        logger.warning("Couldn't determine worksteps for %s", buildername)
         worksteps = None
+        if args.assert_on_missing:
+            assert False
 
     worktime = datetime.timedelta()
     overhead = datetime.timedelta()
 
-    # Get the steps
-    statusdb_conn = statusdb.connect()
-    steps = statusdb_conn.execute(worksteps_q, buildid=buildrow.id).fetchall()
     matched = False
-    for step in steps:
-        if not worksteps:
-            logger.critical(step)
-            continue
-
-        if any(re.match(ws, step.name) for ws in worksteps):
-            matched = True
-            if not step.starttime or not step.endtime:
-                continue
-            worktime += (step.endtime - step.starttime)
-        else:
-            if not step.starttime or not step.endtime:
-                continue
-            overhead += (step.endtime - step.starttime)
+    if not worksteps:
+        logger.debug('No worksteps to match. Skipping step lookup.')
+    else:
+        # Get the steps
+        statusdb_conn = statusdb.connect()
+        steps = statusdb_conn.execute(worksteps_q, buildid=buildrow.id).fetchall()
+        for step in steps:
+            if any(re.match(ws, step.name) for ws in worksteps):
+                matched = True
+                if not step.starttime or not step.endtime:
+                    continue
+                worktime += (step.endtime - step.starttime)
+            else:
+                if not step.starttime or not step.endtime:
+                    continue
+                overhead += (step.endtime - step.starttime)
 
     if not matched:
-        logger.critical("Workstep not matched.")
-        logger.critical(buildername)
+        logger.warning("Workstep not matched.")
+        logger.warning(buildername)
+        # New builds may introduce new steps. Spit out a list of steps
+        # when running in debug mode so we can make additions. Our warnings
+        # above will let us know when we should turn debug on.
         for step in steps:
-            logger.critical(step)
+            logger.debug(step)
         if args.assert_on_missing:
             assert False
         return None
 
-    if not worksteps:
-        logger.critical("No worksteps found.")
-        if args.assert_on_missing:
-            assert False
-        return None
     logger.debug("worktime + overhead: %s", worktime + overhead)
 
     R.set(r_key, td2secs(worktime))
@@ -387,7 +386,7 @@ if __name__ == "__main__":
     logger.addHandler(ch)
 
     if not args.csvfile:
-        logger.critical("csvfile not set!")
+        logger.warning("csvfile not set!")
         assert args.csvfile
 
     # Do db query setup
@@ -428,10 +427,10 @@ if __name__ == "__main__":
 
         if os is None or jobtype is None:
             if os is None:
-                logger.critical("OS lookup failed")
+                logger.warning("OS lookup failed")
             elif jobtype is None:
-                logger.critical("Jobtype lookup failed")
-            logger.critical(props['buildername'])
+                logger.warning("Jobtype lookup failed")
+            logger.warning(props['buildername'])
             if args.assert_on_missing:
                 assert False, props['buildername']
             continue

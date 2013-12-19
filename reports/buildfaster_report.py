@@ -285,6 +285,7 @@ _worksteps = [
         ('.*reftest-ipc', ['reftest', 'run_script']),
         ('.*crashtest', ['crashtest', 'run_script']),
         ('.*xpcshell', ['xpcshell', 'run_script']),
+        ('.*cppunit', ['run_script']),
         ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins', 'run_script']),
         ('.*jetpack', ['jetpack', 'run_script', 'testpkgs', 'testaddons']),
         ('.*mochitests-\d/\d', ['mochitest-plain-\d', 'run_script']),

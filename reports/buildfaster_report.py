@@ -330,6 +330,7 @@ def get_worktime(buildrow, props):
     overhead = datetime.timedelta()
 
     matched = False
+    steps = []
     if not worksteps:
         logger.debug('No worksteps to match. Skipping step lookup.')
     else:

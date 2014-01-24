@@ -201,8 +201,8 @@ _jobtype_patterns = [
         ('opt test', ['.*opt test.*']),
         ('talos', ['.*talos.*']),
         ('debug test', ['.*debug test.*']),
-        ('debug build', ['.*leak test build$', '.*br-haz.*', 'leak test non-unified$']),
-        ('opt build', ['.*nightly$', '.*build$', 'non-unified$']),
+        ('debug build', ['.*leak test build$', '.*br-haz.*', '.*leak test non-unified$']),
+        ('opt build', ['.*nightly$', '.*build$', '.*non-unified$']),
         ('b2g test', ['b2g_ubuntu64_vm','B2G.*']),
         ('b2g build', ['b2g.*','B2G.*']),
         ]

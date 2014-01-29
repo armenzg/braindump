@@ -14,6 +14,10 @@ def format_args(args):
 
 g = {}
 
+if len(sys.argv) != 2:
+    print "missing path to master.cfg file"
+    raise SystemExit(1)
+
 abspath = os.path.abspath(os.path.dirname(sys.argv[1]))
 sys.path.append(abspath)
 os.chdir(abspath)

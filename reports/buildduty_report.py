@@ -25,6 +25,14 @@ options = {
     'include_fields':   '_default,attachments,depends_on',
 }
 
+loan_request_options = {
+    'product':          'Release Engineering',
+    'component':        'Loan Requests',
+    'email1':           'nobody@mozilla.org',
+    'email1_assigned_to': 1,
+    'status':           ['UNCONFIRMED','NEW','ASSIGNED','REOPENED'],
+}
+
 def generateHTMLHeader():
     now = datetime.datetime.now()
     now_day = now.strftime("%B %d, %Y")
@@ -35,10 +43,10 @@ def generateHTMLHeader():
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Buildduty Report - %s</title>
     <link rel="stylesheet" media="screen,projection,tv" href="https://www.mozilla.org/media/css/responsive-min.css?build=b6689b7" />
-    <link rel="stylesheet" href="./jquery.tablesorter/themes/blue/style.css" type="text/css" media="print, projection, screen" /> 
+    <link rel="stylesheet" href="./jquery.tablesorter/themes/blue/style.css" type="text/css" media="print, projection, screen" />
     <link rel="stylesheet" href="./css/slave_health.css" type="text/css" media="print, projection, screen" />
     <script type="text/javascript" src="./jquery.tablesorter/jquery-1.6.4.min.js"></script>
-    <script type="text/javascript" src="./jquery.tablesorter/jquery.tablesorter.js"></script> 
+    <script type="text/javascript" src="./jquery.tablesorter/jquery.tablesorter.js"></script>
     <script language="javaScript" type="text/javascript" src="./js/bugzilla.js"></script>
     <script language="javaScript" type="text/javascript" src="./js/slave_health.js"></script>
   </head>
@@ -60,17 +68,12 @@ def generateHTMLHeader():
     return header
 
 def generateInPageLinks(page_sections):
-    links = " | ".join("<a href=\"#%s\">%s</a>" % (page_section['name'], 
+    links = " | ".join("<a href=\"#%s\">%s</a>" % (page_section['name'],
                                                    page_section['title']) for page_section in page_sections)
     links += "\n<hr/>\n"
     return links
 
 def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, links=""):
-    strike_open = ''
-    strike_close = ''
-    if strike_deps:
-        strike_open = '<s>'
-        strike_close = '</s>'
     if not css_class:
         css_class="tablesorter"
     table = "<table id=\"{0}\" class=\"{1}\">\n".format(table_id, css_class)
@@ -83,12 +86,17 @@ def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, l
         if not bug.depends_on:
             table += "None"
         else:
-            for dep_bug in bug.depends_on: 
+            for dep_bug in bug.depends_on:
+                strike_open = ''
+                strike_close = ''
+                if dep_bug in dep_tracker and dep_tracker[dep_bug] in ['RESOLVED', 'VERIFIED']:
+                    strike_open = '<s>'
+                    strike_close = '</s>'
                 table += "{0}<a href=\"https://bugzil.la/{1}\">{1}</a>{2}, ".format(strike_open, dep_bug, strike_close)
             table = table[:-2]
         table += "</td>\n</tr>\n"
     table += "</table>\n\n"
-    table_header = "<strong>%s</strong> <a name =\"%s\" target=\"builddutybugzilla\" href=\"https://bugzilla.mozilla.org/buglist.cgi?bug_id=%s\"><small>(View list in bugzilla)</a></small>" % \
+    table_header = "<strong>%s</strong> <a name =\"%s\" target=\"builddutybugzilla\" href=\"https://bugzilla.mozilla.org/buglist.cgi?bug_id=%s\"><img class=\"bugzilla\" src=\"icons/bugzilla.png\" alt=\"View list in Bugzilla\" title=\"View list in Bugzilla\" /></a>" % \
         (title, table_id, ','.join(str(bug.id) for bug in bugs))
     if links != "":
         table_header += " | <small>%s</small>" % links
@@ -129,7 +137,7 @@ if __name__ == "__main__":
             continue
         found_open_deps = False
         for dep_bug in bug.depends_on:
-            if not dep_tracker.has_key(dep_bug):
+            if not dep_bug in dep_tracker:
                 current_bug = bmo.get_bug(dep_bug)
                 if current_bug:
                     try:
@@ -139,9 +147,9 @@ if __name__ == "__main__":
                         # so assume it's still open.
                         deps_open.append(bug)
                         found_open_deps = True
-                    continue                    
-            if not dep_tracker.has_key(dep_bug) or \
-                    dep_tracker[dep_bug] not in ['RESOLVED', 'VERIFIED']:
+                        break
+            if not dep_bug in dep_tracker or \
+               dep_tracker[dep_bug] not in ['RESOLVED', 'VERIFIED']:
                 # We only need to find one dep still open
                 deps_open.append(bug)
                 found_open_deps = True
@@ -149,12 +157,7 @@ if __name__ == "__main__":
         if not found_open_deps:
             deps_resolved.append(bug)
 
-    ids = {}
-    for bug in no_deps + deps_open + deps_resolved:
-        if ids.has_key(bug.id):
-            print "Oops, we already found this bug: %d" % bug.id
-        else:
-            ids[bug.id] = 1
+    loan_requests = bmo.get_bug_list(loan_request_options)
 
     f = open(html_file, 'w')
     f.write(generateHTMLHeader())
@@ -165,31 +168,42 @@ if __name__ == "__main__":
                           'title': 'All dependencies resolved'}
     deps_open_desc = {'name': 'depsopen',
                       'title': 'Open dependencies'}
-
-    in_page_links = generateInPageLinks([{'name': 'nodeps',
-                                          'title': 'No dependencies (likely new bugs)'},
-                                        ])
+    loan_requests_desc = {'name': 'loanreqs',
+                          'title': 'Loan requests (new)'}
 
     f.write(generateBugTable('nodeps',
-                             'No dependencies (likely new bugs)', 
+                             'No dependencies (likely new bugs)',
                              no_deps,
                              links=generateInPageLinks([deps_resolved_desc,
-                                                        deps_open_desc])
+                                                        deps_open_desc,
+                                                        loan_requests_desc])
                              ) + '\n')
-    
+
     f.write(generateBugTable('depsresolved',
-                             'All dependencies resolved', 
+                             'All dependencies resolved',
                              deps_resolved,
                              strike_deps=True,
                              links=generateInPageLinks([no_deps_desc,
-                                                        deps_open_desc])
+                                                        deps_open_desc,
+                                                        loan_requests_desc])
                              ) + '\n')
-    
+
     f.write(generateBugTable('depsopen',
-                             'Open dependencies', 
+                             'Open dependencies',
                              deps_open,
+                             strike_deps=True,
                              links=generateInPageLinks([no_deps_desc,
+                                                        deps_resolved_desc,
+                                                        loan_requests_desc])
+                             ) + '\n')
+
+    f.write(generateBugTable('loanreqs',
+                             'Loan requests (new)',
+                             loan_requests,
+                             strike_deps=True,
+                             links=generateInPageLinks([no_deps_desc,
+                                                        deps_open_desc,
                                                         deps_resolved_desc])
                              ) + '\n')
-    
+
     f.write(generateHTMLFooter())

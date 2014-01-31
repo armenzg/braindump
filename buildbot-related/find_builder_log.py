@@ -64,7 +64,7 @@ def main():
                                      usage='%(prog)s [options] builder-name')
 
     parser.add_argument('--masters', '-m',
-                        default='http://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json',
+                        default='https://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json',
                         dest='masters_json',
                         help='URL or path to json file')
     parser.add_argument('--one-only', '-o',

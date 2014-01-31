@@ -3,7 +3,7 @@ set -e
 set -x
 
 BASEDIR=/home/rail/work/mozilla/repos/sync
-HG="http://hg.mozilla.org"
+HG="https://hg.mozilla.org"
 REPOS="build/buildbot-configs
        build/buildapi
        build/buildbotcustom

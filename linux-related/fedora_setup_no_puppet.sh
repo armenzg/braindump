@@ -96,7 +96,7 @@ done
 rm -rf /tools/buildbot
 ln -s /tools/buildbot-${production_version} /tools/buildbot
 
-hg clone http://hg.mozilla.org/build/puppet-manifests
+hg clone https://hg.mozilla.org/build/puppet-manifests
 
 cp ./puppet-manifests/modules/buildslave/files/runslave.py /usr/local/bin/runslave.py
 chown root /usr/local/bin/runslave.py

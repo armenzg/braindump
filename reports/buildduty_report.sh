@@ -3,7 +3,7 @@ set -e
 
 cd $HOME/buildduty
 if [ ! -d braindump ]; then
-  hg clone http://hg.mozilla.org/build/braindump/
+  hg clone https://hg.mozilla.org/build/braindump/
   ln -s braindump/reports/buildduty_report.py
 else
   hg -q -R braindump pull -u

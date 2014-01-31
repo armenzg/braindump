@@ -8,8 +8,8 @@ set -e
 VERSION=10
 HG_USER="ffxbld <release@mozilla.com>"
 
-hg clone http://hg.mozilla.org/releases/mozilla-release
-hg clone http://hg.mozilla.org/releases/mozilla-beta
+hg clone https://hg.mozilla.org/releases/mozilla-release
+hg clone https://hg.mozilla.org/releases/mozilla-beta
 
 beta_rev=$(hg -R mozilla-beta id -i -r default)
 release_rev=$(hg -R mozilla-release id -i -r default)

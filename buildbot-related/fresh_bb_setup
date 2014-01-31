@@ -42,11 +42,11 @@ virtualenv --python=$PY --system-site-packages $NAME
 cd $NAME
 for i in buildbot twisted tools buildbotcustom buildbot-configs puppet-manifests ; do
     echo Cloning $i
-    hg clone http://hg.mozilla.org/${REPO_PATH}/$i
+    hg clone https://hg.mozilla.org/${REPO_PATH}/$i
 done
 
 echo Cloning braindump
-hg clone http://hg.mozilla.org/build/braindump
+hg clone https://hg.mozilla.org/build/braindump
 
 VENV_PY=$PWD/bin/$(basename $PY)
 BUILDBOT=$PWD/bin/buildbot

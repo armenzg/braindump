@@ -399,7 +399,7 @@ if __name__ == "__main__":
     submittime_q = sa.text(submittime_sql)
     worksteps_q =  sa.text(worksteps_sql)
 
-    masters = json.load(urllib.urlopen("http://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
+    masters = json.load(urllib.urlopen("https://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
 
     start = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
     today = datetime.datetime.now().strftime("%Y-%m-%d")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-from sqlalchemy import create_engine, MetaData, Table, distinct
+from sqlalchemy import create_engine, MetaData, Table, distinct, func
 from sqlalchemy.orm import sessionmaker, mapper
 
 class Builds(object):
@@ -44,7 +44,8 @@ if __name__ == '__main__':
     mapper(Changes, changes)
     session = sessionmaker(bind=engine)()
 
-    builder_data = dict()
+    from collections import defaultdict
+    builder_data = defaultdict(list)
     for b, br, bs, ss, c in session.query(Builds, Buildrequests, Buildsets, Sourcestamps, Changes)\
                          .outerjoin(Buildrequests, Builds.brid==Buildrequests.id)\
                          .join(Buildsets, Buildrequests.buildsetid==Buildsets.id)\
@@ -56,26 +57,20 @@ if __name__ == '__main__':
 
         if not b.finish_time:
             continue
-        if br.buildername not in builder_data:
-            builder_data[br.buildername] = {}
-            builder_data[br.buildername]["jobs"] = []
-            builder_data[br.buildername]["coalesced"] = 0
         rev = ss.revision[:12]
         pushed_at = c.when_timestamp
         wait_time = int(b.start_time - pushed_at)
         build_time = int(b.finish_time - b.start_time)
         total_time = int(wait_time + build_time)
-        builder_data[br.buildername]["jobs"].append("%s\t%s\t%s\t%s\t%s" % (rev, pushed_at, wait_time, build_time, total_time))
-
-        total_revs = session.query(Builds.id).join(Buildrequests, Builds.brid==Buildrequests.id).filter(Builds.number==b.number).filter(Buildrequests.buildername==br.buildername).count()
-        # If there's any one build per rev, no coalescing was done.
-        # Any builds past the 1st with the same rev represent one coalesced push each.
-        builder_data[br.buildername]["coalesced"] += (total_revs - 1)
+        builder_data[br.buildername].append("%s\t%s\t%s\t%s\t%s" % (rev, pushed_at, wait_time, build_time, total_time))
 
     for builder, data in builder_data.iteritems():
+        coalesced = 0
+        for r in session.query(func.count(Buildrequests.complete_at)).filter(Buildrequests.buildername==builder).group_by(Buildrequests.complete_at).having(func.count(Buildrequests.complete_at) > 1):
+            coalesced += (r[0] - 1)
         print builder
         print "Revision\tPushed at\tWait time\tBuild time\t Total time"
-        for j in data["jobs"]:
+        for j in data:
             print j
         print
-        print "Coalesced:\t%s" % data["coalesced"]
+        print "Coalesced:\t%s" % coalesced

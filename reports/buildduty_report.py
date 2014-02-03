@@ -70,7 +70,6 @@ def generateHTMLHeader():
 def generateInPageLinks(page_sections):
     links = " | ".join("<a href=\"#%s\">%s</a>" % (page_section['name'],
                                                    page_section['title']) for page_section in page_sections)
-    links += "\n<hr/>\n"
     return links
 
 def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, links=""):
@@ -178,7 +177,7 @@ if __name__ == "__main__":
                                                         deps_open_desc,
                                                         loan_requests_desc])
                              ) + '\n')
-
+    f.write("\n<hr/>\n")
     f.write(generateBugTable('depsresolved',
                              'All dependencies resolved',
                              deps_resolved,
@@ -187,7 +186,7 @@ if __name__ == "__main__":
                                                         deps_open_desc,
                                                         loan_requests_desc])
                              ) + '\n')
-
+    f.write("\n<hr/>\n")
     f.write(generateBugTable('depsopen',
                              'Open dependencies',
                              deps_open,
@@ -196,7 +195,7 @@ if __name__ == "__main__":
                                                         deps_resolved_desc,
                                                         loan_requests_desc])
                              ) + '\n')
-
+    f.write("\n<hr/>\n")
     f.write(generateBugTable('loanreqs',
                              'Loan requests (new)',
                              loan_requests,

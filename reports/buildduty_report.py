@@ -110,6 +110,7 @@ $(document).ready(function(){
 $("#nodeps").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 $("#depsresolved").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 $("#depsopen").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
+$("#loanreqs").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 });
 </script>
 

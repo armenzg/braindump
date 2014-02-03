@@ -44,23 +44,9 @@ if __name__ == '__main__':
     mapper(Changes, changes)
     session = sessionmaker(bind=engine)()
 
-    print "Build times:"
-    print "builder name, build number, built revision, build time, # of builds coallesced"
-    for b, br, bs, ss in session.query(Builds, Buildrequests, Buildsets, Sourcestamps)\
-                         .outerjoin(Buildrequests, Builds.brid==Buildrequests.id)\
-                         .join(Buildsets, Buildrequests.buildsetid==Buildsets.id)\
-                         .join(Sourcestamps, Buildsets.sourcestampid==Sourcestamps.id)\
-                         .filter(Buildrequests.buildername.in_(builders))\
-                         .filter(Builds.start_time > since):
-
-        elapsed = b.finish_time - b.start_time    
-        final_rev = ss.revision
-        total_revs = session.query(Builds.id).join(Buildrequests, Builds.brid==Buildrequests.id).filter(Builds.number==b.number).filter(Buildrequests.buildername==br.buildername).count()
-        print "%s,%s,%s,%s,%s" % (br.buildername, b.number, final_rev, elapsed, total_revs)
-
-    print "Wait times:"
-    print "builder name, revision, wait time"
-    for b, br, ss, c in session.query(Builds, Buildrequests, Sourcestamps, Changes)\
+    from collections import defaultdict
+    data = defaultdict(list)
+    for b, br, bs, ss, c in session.query(Builds, Buildrequests, Buildsets, Sourcestamps, Changes)\
                          .outerjoin(Buildrequests, Builds.brid==Buildrequests.id)\
                          .join(Buildsets, Buildrequests.buildsetid==Buildsets.id)\
                          .join(Sourcestamps, Buildsets.sourcestampid==Sourcestamps.id)\
@@ -68,5 +54,20 @@ if __name__ == '__main__':
                          .join(Changes, SourcestampChanges.changeid==Changes.changeid)\
                          .filter(Buildrequests.buildername.in_(builders))\
                          .filter(Builds.start_time > since):
-        if b.finish_time:
-            print "%s,%s,%s" % (br.buildername, ss.revision, b.start_time - c.when_timestamp)
+
+        #total_revs = session.query(Builds.id).join(Buildrequests, Builds.brid==Buildrequests.id).filter(Builds.number==b.number).filter(Buildrequests.buildername==br.buildername).count()
+        #print "%s,%s,%s,%s,%s" % (br.buildername, b.number, final_rev, elapsed, total_revs)
+        if not b.finish_time:
+            continue
+        rev = ss.revision[:12]
+        pushed_at = c.when_timestamp
+        wait_time = int(b.start_time - pushed_at)
+        build_time = int(b.finish_time - b.start_time)
+        total_time = int(wait_time + build_time)
+        data[br.buildername].append("%s\t%s\t%s\t%s\t%s" % (rev, pushed_at, wait_time, build_time, total_time))
+
+    for builder, row in data.iteritems():
+        print builder
+        print "Revision\tPushed at\tWait time\tBuild time\t Total time"
+        for r in row:
+            print r

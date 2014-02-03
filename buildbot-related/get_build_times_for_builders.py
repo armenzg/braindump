@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     for builder, data in builder_data.iteritems():
         coalesced = 0
-        for r in session.query(func.count(Buildrequests.complete_at)).filter(Buildrequests.buildername==builder).group_by(Buildrequests.complete_at).having(func.count(Buildrequests.complete_at) > 1):
+        for r in session.query(func.count(Buildrequests.complete_at)).outerjoin(Builds, Buildrequests.id==Builds.brid).filter(Buildrequests.buildername==builder).filter(Builds.start_time > since).group_by(Buildrequests.complete_at).having(func.count(Buildrequests.complete_at) > 1):
             coalesced += (r[0] - 1)
         print builder
         print "Revision\tPushed at\tWait time\tBuild time\t Total time"

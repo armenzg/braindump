@@ -47,18 +47,23 @@ if __name__ == '__main__':
     from collections import defaultdict
     builder_data = defaultdict(list)
     for b, br, bs, ss, c in session.query(Builds, Buildrequests, Buildsets, Sourcestamps, Changes)\
-                         .outerjoin(Buildrequests, Builds.brid==Buildrequests.id)\
+                         .join(Buildrequests, Builds.brid==Buildrequests.id)\
                          .join(Buildsets, Buildrequests.buildsetid==Buildsets.id)\
                          .join(Sourcestamps, Buildsets.sourcestampid==Sourcestamps.id)\
-                         .join(SourcestampChanges, Sourcestamps.id==SourcestampChanges.sourcestampid)\
-                         .join(Changes, SourcestampChanges.changeid==Changes.changeid)\
+                         .outerjoin(SourcestampChanges, Sourcestamps.id==SourcestampChanges.sourcestampid)\
+                         .outerjoin(Changes, SourcestampChanges.changeid==Changes.changeid)\
                          .filter(Buildrequests.buildername.in_(builders))\
                          .filter(Builds.start_time > since):
 
         if not b.finish_time:
             continue
         rev = ss.revision[:12]
-        pushed_at = c.when_timestamp
+        # If we have a Change object, this was a normal build (ie, triggered by a push).
+        if c:
+            pushed_at = c.when_timestamp
+        # If not, this was probably a forced build or periodic. Buildsets.submitted_at should be accurate.
+        else:
+            pushed_at = int(bs.submitted_at)
         wait_time = int(b.start_time - pushed_at)
         build_time = int(b.finish_time - b.start_time)
         total_time = int(wait_time + build_time)

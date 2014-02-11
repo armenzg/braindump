@@ -16,6 +16,17 @@ get_key_ids = gpg.bake('--no-default-keyring', '--secret-keyring', '/dev/null',
                        '--list-only', _iter='err')
 
 
+def update_keys_needed(file_list):
+    keys = set()
+    for f in file_list:
+        for l in get_key_ids(f):
+            gpg_id = grab_id.match(l)
+            if gpg_id:
+                this_id = gpg_id.groupdict()['gpg_id']
+                keys.add("0x{0}".format(this_id))
+    gpg('--recv-keys', *list(keys))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--only', dest='user',
@@ -28,13 +39,15 @@ def main():
                         help='a GPG/PGP encrypted file')
     args = parser.parse_args()
     keys = set()
+    if not args.ids_only:
+        update_keys_needed(args.files)
     for f in args.files:
         for l in get_key_ids(f):
             gpg_id = grab_id.match(l)
             if gpg_id:
                 this_id = gpg_id.groupdict()['gpg_id']
                 if args.ids_only:
-                    keys.add("-r 0x{}".format(this_id))
+                    keys.add("-r 0x{0}".format(this_id))
             elif not args.ids_only:
                 this_user = "{1} 0x{0}".format(this_id, l.strip())
                 if args.user:

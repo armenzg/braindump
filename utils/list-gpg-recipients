@@ -1,72 +1,57 @@
-#!/bin/bash
+#!/usr/bin/env python
+"""
+Display recipients of gpg encrypted files
+"""
 
-USAGE="usage: ${0##*/} [options] files...
-Display recipients of gpg encrypted files (or *.gpg)
+try:
+    from sh import gpg
+except ImportError:
+    raise SystemExit("please run 'pip install --user sh'")
+import argparse
+import re
 
-Options:
-    --only USER     only display files where USER is a recipient
-    -r              format output for use as recipient options
-    -h | --help     this message
-"
+grab_id = re.compile(r'''^(gpg):.*ID\s+(?P<gpg_id>\w+)?''')
 
-warn() { for m; do echo "$m" ; done 1>&2 ; }
-die() { warn "$@" ; exit 1; }
-usage() { warn "$@" "$USAGE" ; test $# -eq 0 ; exit $?; }
+get_key_ids = gpg.bake('--no-default-keyring', '--secret-keyring', '/dev/null',
+                       '--list-only', _iter='err')
 
-only_user=""
-recipient_format=false
-while test $# -ne 0; do
-    case "$1" in
-        --only) only_user="$2"; shift ;;
-        -r) recipient_format=true ;;
-        -h|--help) usage ;;
-        -*) usage "Unknown option '$1'" ;;
-        *) break ;;
-    esac
-    shift
-done
 
-test $# -eq 0 && usage "Missing file name(s)"
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--only', dest='user',
+                        help='only display files USER can decrypt',
+                        metavar='USER')
+    parser.add_argument('-r', action='store_true', default=False,
+                        dest="ids_only",
+                        help='format for use as recipients for encryption')
+    parser.add_argument('files', metavar='FILE', nargs='+',
+                        help='a GPG/PGP encrypted file')
+    args = parser.parse_args()
+    keys = set()
+    for f in args.files:
+        for l in get_key_ids(f):
+            gpg_id = grab_id.match(l)
+            if gpg_id:
+                this_id = gpg_id.groupdict()['gpg_id']
+                if args.ids_only:
+                    keys.add("-r 0x{}".format(this_id))
+            elif not args.ids_only:
+                this_user = "{1} 0x{0}".format(this_id, l.strip())
+                if args.user:
+                    if args.user in this_user:
+                        keys.add(f)
+                        break
+                else:
+                    keys.add(this_user)
+    values = list(keys)
+    values.sort()
+    if args.ids_only:
+        join = ', '
+    else:
+        join = '\n'
+    if values:
+        text = join.join(values)
+        print text
 
-if test -n "$only_user"; then
-    only_cmd="grep -i $only_user"
-elif $recipient_format; then
-    only_cmd=format_as_recipients
-else
-    only_cmd="cat -"
-fi
-
-# format as recipients -- harder than it looks
-format_as_recipients() {
-    local recip
-    while read l; do
-        # strip to just email address
-        recip=${l##*<}
-        recip=${recip%%>*}
-        printf ' %s %q' '-r' $recip
-    done
-    echo
-}
-
-# get key id's we don't have
-get_missing_key_id() {
-    local encrypted="$1"
-    gpg 2>&1 >/dev/null \
-        --no-default-keyring --secret-keyring /dev/null --list-only "$encrypted" |
-    awk '$6 == "ID" { print $7; }' |
-    xargs -n 1 -I {} gpg --recv-keys 0x{}
-}
-
-list_recipients() {
-    local encrypted="$1"
-    gpg 2>&1 >/dev/null \
-        --no-default-keyring --secret-keyring /dev/null --list-only "$encrypted" |
-    grep -v ^gpg: |
-    $only_cmd 
-}
-
-for f in "$@"; do
-    get_missing_key_id $f
-    list_recipients $f
-done |
-sort -u
+if __name__ == '__main__':
+    main()

@@ -1,19 +1,56 @@
 #!/usr/bin/env python
 """
-Display recipients of gpg encrypted files
+Display recipients of gpg encrypted files.
+
+Note: if you don't trust a key well enough to encrypt with it (without
+      prompting) a warning will be displayed.
 """
 
 try:
-    from sh import gpg
+    from sh import gpg, ErrorReturnCode_2
 except ImportError:
     raise SystemExit("please run 'pip install --user sh'")
 import argparse
+import os
 import re
+import sys
 
 grab_id = re.compile(r'''^(gpg):.*ID\s+(?P<gpg_id>\w+)?''')
 
 get_key_ids = gpg.bake('--no-default-keyring', '--secret-keyring', '/dev/null',
                        '--list-only', _iter='err')
+
+
+def get_key_user(key):
+    result = gpg('--list-key', key)
+    line = result.stdout.split('\n')[1]
+    if not line.startswith('uid'):
+        raise IndexError(line)
+    who = line.split(None,1)[1]
+    return who
+
+
+def check_key_validity(key):
+    """ see if key is valid by trying to encrypt with it
+
+    Note that this could also be done by parsing the output of
+        gpg --list-keys --with-colons
+    """
+    try:
+        result = gpg(
+                    '--batch',
+                    '--encrypt',
+                    '--dry-run',
+                    '--output', '/dev/null',
+                    '--recipient', key,
+                    '/dev/null',
+        )
+        valid = True
+        user = None
+    except ErrorReturnCode_2:
+        valid = False
+        user = get_key_user(key)
+    return valid, user
 
 
 def update_keys_needed(file_list):
@@ -24,7 +61,22 @@ def update_keys_needed(file_list):
             if gpg_id:
                 this_id = gpg_id.groupdict()['gpg_id']
                 keys.add("0x{0}".format(this_id))
+    # the next operation hits the keyserver
     gpg('--recv-keys', *list(keys))
+    for key in keys:
+        valid, who = check_key_validity(key)
+        if not valid:
+            sys.stderr.write("WARNING: key %s is not valid\n" % who)
+
+
+def check_files(file_list):
+    all_good = True
+    for f in file_list:
+        if not os.path.isfile(f):
+            all_good = False
+            sys.stderr.write("No such file '%s'\n" % (f,))
+    if not all_good:
+        raise SystemExit("Invalid arguments")
 
 
 def main():
@@ -38,6 +90,7 @@ def main():
     parser.add_argument('files', metavar='FILE', nargs='+',
                         help='a GPG/PGP encrypted file')
     args = parser.parse_args()
+    check_files(args.files)
     keys = set()
     if not args.ids_only:
         update_keys_needed(args.files)
@@ -59,7 +112,7 @@ def main():
     values = list(keys)
     values.sort()
     if args.ids_only:
-        join = ', '
+        join = ' '
     else:
         join = '\n'
     if values:

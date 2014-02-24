@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+from sh import gpg
+
+gpg_raw_key_data = gpg.bake('--list-keys', '--with-colons')
+
+trust_levels = {
+    '2': 'undefined',
+    '3': 'untrusted',
+    '4': 'marginal',
+    '5': 'FULLY',
+    '6': 'ULTIMATE',
+}
+trust_level_counts = {}
+
+
+def gpg_key(key):
+    name = '<unknown>'
+    for l in gpg_raw_key_data(key):
+        if not l.startswith('uid:'):
+            continue
+        fields = l.split(':')
+        name = fields[9]
+        break
+    return name
+
+for l in gpg('--export-ownertrust'):
+    if l.startswith('#'):
+        continue
+    key, trust_level = l.split(':')[0:2]
+    # don't list disabled keys
+    if trust_level == '128':
+        continue
+    try:
+        trust_level_counts[trust_level] += 1
+    except KeyError:
+        trust_level_counts[trust_level] = 1
+    print trust_levels.get(trust_level, trust_level),
+    print "0x{}".format(key[-8:]),
+    print gpg_key("0x{}".format(key))
+
+marginals = trust_level_counts.get('4', 0) \
+          + trust_level_counts.get('5', 0) \
+          + trust_level_counts.get('6', 0)
+if marginals < 3:
+    # too few marginals
+    print "WARNING: you only have %d marginal trusts," \
+          "a minimum of 3 is recommended" % (marginals,)

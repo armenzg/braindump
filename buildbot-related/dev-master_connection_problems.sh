@@ -4,7 +4,7 @@
 #
 # You can run this script from your own machine, and it will:
 #
-#     * SSH into dev-master01, as cltbld, and look for any buildbot processes running
+#     * SSH into dev-master1, as cltbld, and look for any buildbot processes running
 #     * For each buildbot instance, it will look through the latest twistd.log
 #     * For any slaves that show up in this log with an Unhandled Error, it will report on it
 #     * For each of these slaves, it will log onto the slave (as cltbld) and check for any
@@ -14,7 +14,7 @@
 #     * Where a slave is unauthorised, it will report on the slavename, password, buildbot
 #       master and port settings that are being used
 
-ssh -oConnectTimeout=20 -oBatchMode=yes -oStrictHostKeyChecking=no cltbld@dev-master01 '
+ssh -oConnectTimeout=20 -oBatchMode=yes -oStrictHostKeyChecking=no cltbld@dev-master1 '
     ps -ef | sed -n '\''s/.*\/builds\/buildbot\/\(.*\)\/bin\/buildbot start .*/\1/p'\'' | sort -u | while read master
     do
         cat "/builds/buildbot/${master}/master/twistd.log" | sed -n '\''s/^.*,\([0-9\.]*\)\].*Unhandled Error.*/\1/p'\'' | sort -u | while read IP

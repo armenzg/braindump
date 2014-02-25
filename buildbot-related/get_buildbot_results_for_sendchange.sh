@@ -2,9 +2,9 @@
 
 ### DEFAULTS ###
 max_records=100
-master_url='http://dev-master01.build.scl1.mozilla.com:8036'
+master_url='http://dev-master1.srv.releng.scl3.mozilla.com:8036'
 user='kmoir'
-host='dev-master01'
+host='dev-master1'
 remote_dir='/builds/buildbot/kmoir/test2'
 
 function usage {

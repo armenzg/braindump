@@ -44,3 +44,9 @@ for m in machines:
 all_machines = set(machines.keys())
 if allocated != all_machines:
     logging.warning("Mismatch in allocated/all vs. machines/*: %s", allocated.difference(all_machines))
+
+for m in sorted(machines):
+    print "%s is allocated to %s builders" % (m, len(machines[m]))
+
+for b in sorted(builders):
+    print "%s has %s machines allocated to it" % (b, len(builders[b]))

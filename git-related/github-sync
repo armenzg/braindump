@@ -1,0 +1,49 @@
+#!/bin/bash
+set -e
+set -x
+
+BASEDIR=/home/rail/work/mozilla/repos/sync
+HG="https://hg.mozilla.org"
+REPOS="build/buildbot-configs
+       build/buildapi
+       build/buildbotcustom
+       build/mozharness
+       build/opsi-package-sources
+       build/preproduction
+       build/puppet-manifests
+       build/rpm-sources
+       build/talos
+       build/tools
+       build/partner-repacks"
+GITBASE=/home/rail/work/mozilla/repos/git
+
+oldCwd=`pwd`
+cd $BASEDIR
+for repo in $REPOS; do
+    repoName=$(basename $repo)
+    gitRepo="$repo-git"
+    if [ ! -d $GITBASE/$repoName ]; then
+        mkdir -p $GITBASE/$repoName
+        git init --bare $GITBASE/$repoName
+    fi
+    if [ ! -d $repo ]; then
+        mkdir -p $repo
+        hg clone $HG/$repo $repo
+    fi
+    if [ ! -d $gitRepo ]; then
+        mkdir -p $gitRepo
+        pushd $gitRepo
+        git init --bare .
+        git remote add origin git+ssh://localhost/$GITBASE/$repoName
+        popd
+    fi
+    pushd $repo
+    hg pull
+    hg bookmark -f -r default master
+    hg push -f git+ssh://localhost/$BASEDIR/$gitRepo
+    popd
+    pushd $gitRepo
+    git fetch origin
+    git push -f origin master
+    popd
+done

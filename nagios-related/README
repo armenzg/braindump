@@ -1,0 +1,7 @@
+This directory is intended for the development of nagios plugins, etc..
+This gives us a place for tests and docs.
+
+Typically, the plugin will be deployed via puppet, so the runtime may be
+checked into the puppet tree as well. Please put a pointer to the dev
+repo in the script.
+

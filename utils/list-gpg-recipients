@@ -1,0 +1,72 @@
+#!/bin/bash
+
+USAGE="usage: ${0##*/} [options] files...
+Display recipients of gpg encrypted files (or *.gpg)
+
+Options:
+    --only USER     only display files where USER is a recipient
+    -r              format output for use as recipient options
+    -h | --help     this message
+"
+
+warn() { for m; do echo "$m" ; done 1>&2 ; }
+die() { warn "$@" ; exit 1; }
+usage() { warn "$@" "$USAGE" ; test $# -eq 0 ; exit $?; }
+
+only_user=""
+recipient_format=false
+while test $# -ne 0; do
+    case "$1" in
+        --only) only_user="$2"; shift ;;
+        -r) recipient_format=true ;;
+        -h|--help) usage ;;
+        -*) usage "Unknown option '$1'" ;;
+        *) break ;;
+    esac
+    shift
+done
+
+test $# -eq 0 && usage "Missing file name(s)"
+
+if test -n "$only_user"; then
+    only_cmd="grep -i $only_user"
+elif $recipient_format; then
+    only_cmd=format_as_recipients
+else
+    only_cmd="cat -"
+fi
+
+# format as recipients -- harder than it looks
+format_as_recipients() {
+    local recip
+    while read l; do
+        # strip to just email address
+        recip=${l##*<}
+        recip=${recip%%>*}
+        printf ' %s %q' '-r' $recip
+    done
+    echo
+}
+
+# get key id's we don't have
+get_missing_key_id() {
+    local encrypted="$1"
+    gpg 2>&1 >/dev/null \
+        --no-default-keyring --secret-keyring /dev/null --list-only "$encrypted" |
+    awk '$6 == "ID" { print $7; }' |
+    xargs -n 1 -I {} gpg --recv-keys 0x{}
+}
+
+list_recipients() {
+    local encrypted="$1"
+    gpg 2>&1 >/dev/null \
+        --no-default-keyring --secret-keyring /dev/null --list-only "$encrypted" |
+    grep -v ^gpg: |
+    $only_cmd 
+}
+
+for f in "$@"; do
+    get_missing_key_id $f
+    list_recipients $f
+done |
+sort -u

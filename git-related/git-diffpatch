@@ -1,0 +1,33 @@
+#!/bin/bash
+# git-mkpatch
+PATCHDIR=$HOME/Mozilla/patches
+set -e
+# What's our branch name?
+branch=$(git symbolic-ref HEAD)
+branch=${branch##refs/heads/}
+
+# What repo are we in?
+repo=$(basename $(git rev-parse --show-toplevel))
+repo=${repo%%.git}
+
+# What should the patch be called?
+to=$PATCHDIR/$branch-$repo.diff
+from=
+
+count=1
+while [ -f $to ]; do
+    next=$PATCHDIR/$branch-$repo-$count.diff
+    if [ ! -f $next ]; then
+        break
+    fi
+    from=$to
+    to=$next
+    count=$((count + 1))
+done
+
+if [ -z $from ]; then
+    echo "Can't find two patches to compare!"
+    exit 1
+fi
+
+colordiff -Nau $from $to

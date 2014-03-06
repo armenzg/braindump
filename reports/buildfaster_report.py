@@ -150,6 +150,7 @@ _os_patterns = [
                            'Android 2.2 no-ionmonkey']),
         ('android', ['Android']),
         ('b2g_hamachi_dep', ['b2g_mozilla-central_hamachi_dep',
+                             'b2g_mozilla-central_hamachi_periodic',
                              'b2g_mozilla-central_hamachi_eng_dep']),
         ('b2g_helix_dep', ['b2g_mozilla-central_helix_dep',
                            'b2g_mozilla-central_helix_periodic',

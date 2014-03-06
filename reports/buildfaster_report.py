@@ -1,10 +1,13 @@
-import simplejson as json
+import json
 import sqlalchemy as sa
 import re, datetime, csv, urllib
-import time, redis
+import time
 import traceback
 import argparse
 import logging
+
+one_day  = 86400
+two_days = one_day*2
 
 schedulerdb = sa.create_engine("mysql://buildbot_reader2:aequeG4ahtooz0qu@buildbot-ro-vip.db.scl3.mozilla.com/buildbot_schedulers", pool_recycle=60)
 statusdb = sa.create_engine("mysql://buildbot_reader2:aequeG4ahtooz0qu@buildbot-ro-vip.db.scl3.mozilla.com/buildbot", pool_recycle=60)
@@ -51,7 +54,33 @@ submittime_sql = """SELECT
 """
 worksteps_sql = """SELECT * FROM steps WHERE steps.build_id = :buildid"""
 
-R = redis.Redis("redis01.build.mozilla.org")
+class Cache(object):
+
+    def __init__(self, hosts=[]):
+        import memcache
+        if not hosts:
+            hosts=['127.0.0.1:11211']
+        self.m = memcache.Client(hosts)
+
+    def _utf8(self, s):
+        if isinstance(s, unicode):
+            return s.encode('utf-8')
+        return s
+
+    def get(self, key):
+        return self.m.get(self._utf8(key))
+
+    def put(self, key, val, expire=0):
+        if expire == 0:
+            self.m.set(self._utf8(key), val)
+        else:
+            expire = int(expire - time.time())
+            self.m.set(self._utf8(key), val, expire)
+
+    def delete(self, key):
+        return self.m.delete(self._utf8(key))
+
+cache = Cache(hosts=['memcache1.releng.webapp.scl3.mozilla.com','memcache2.releng.webapp.scl3.mozilla.com'])
 
 @sa.event.listens_for(sa.pool.Pool, "checkout")
 def check_connection(dbapi_con, con_record, con_proxy):
@@ -73,7 +102,7 @@ def check_connection(dbapi_con, con_record, con_proxy):
             raise
 
 def td2secs(td):
-    return td.seconds + td.days * 86400
+    return td.seconds + td.days * one_day
 
 def get_builds(branch, startdate, enddate):
     branchprefix = branch + "%"
@@ -88,10 +117,9 @@ def get_builds(branch, startdate, enddate):
 
 def get_props(buildrow):
     r_key = "buildfaster:props:%s" % buildrow.id
-    retval = R.get(r_key)
+    retval = cache.get(r_key)
     if retval:
-        R.set(r_key, retval)
-        R.expire(r_key, 86400*2)
+        cache.put(r_key, retval, two_days)
         return json.loads(retval)
 
     retval = {}
@@ -100,8 +128,7 @@ def get_props(buildrow):
         if v is not None:
             v = json.loads(v)
         retval[k] = v
-    R.set(r_key, json.dumps(retval))
-    R.expire(r_key, 86400*2)
+    cache.put(r_key, retval, two_days)
     return retval
 
 _os_patterns = [
@@ -227,18 +254,17 @@ def get_suitename(buildername):
     return buildername.split()[-1]
 
 def get_submittime(schedulerdb, buildrow, props):
-    r_key = "buildfaster:submittime:%s" % buildrow.id
-    if R.exists(r_key):
+    r_key = "buildfaster:submittime:%s" % buildrow.id    
+    retval = cache.get(r_key)
+    if retval:
         try:
-            retval = R.get(r_key)
-            R.set(r_key, retval)
-            R.expire(r_key, 86400*2)
+            cache.put(r_key, retval, two_days)
             if retval is None or retval == 'None':
                 return None
             return datetime.datetime.utcfromtimestamp(int(retval))
         except:
             traceback.print_exc()
-            R.delete(r_key)
+            cache.delete(r_key)
 
     master_name = get_master_dbname(buildrow.master_url)
     schedulerdb_conn = schedulerdb.connect()
@@ -260,8 +286,7 @@ def get_submittime(schedulerdb, buildrow, props):
         if args.assert_on_missing:
             assert False
         return None
-    R.set(r_key, retval)
-    R.expire(r_key, 86400*2)
+    cache.put(r_key, retval, two_days)
     if retval is None:
         return None
     return datetime.datetime.utcfromtimestamp(retval)
@@ -314,15 +339,14 @@ _worksteps = [
 
 def get_worktime(buildrow, props):
     r_key = "buildfaster:worktime:%s" % buildrow.id
-    retval = R.get(r_key)
+    retval = cache.get(r_key)
     if retval:
         try:
-            R.set(r_key, retval)
-            R.expire(r_key, 86400*2)
+            cache.put(r_key, retval, two_days)
             return datetime.timedelta(seconds=int(retval))
         except:
             traceback.print_exc()
-            R.delete(r_key)
+            cache.delete(r_key)
 
     buildername = props['buildername']
     for builder, worksteps in _worksteps:
@@ -370,8 +394,7 @@ def get_worktime(buildrow, props):
 
     logger.debug("worktime + overhead: %s", worktime + overhead)
 
-    R.set(r_key, td2secs(worktime))
-    R.expire(r_key, 86400*2)
+    cache.put(r_key, td2secs(worktime), two_days)
     return worktime
 
 if __name__ == "__main__":

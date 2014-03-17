@@ -108,16 +108,16 @@ def generateHTMLFooter():
 <script type="text/javascript">
 $(document).ready(function(){
 // Don't try to instantiate the sorter if the table is empty
-if $("#nodeps") > 1 {
+if ($("#nodeps") > 1) {
     $("#nodeps").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 }
-if $("#depsresolved") > 1 {
+if ($("#depsresolved") > 1) {
     $("#depsresolved").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 }
-if $("#depsopen") > 1 {
+if ($("#depsopen") > 1) {
     $("#depsopen").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 }
-if $("#loanreqs") > 1 {
+if ($("#loanreqs") > 1) {
     $("#loanreqs").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 }
 });

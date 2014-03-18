@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
-"""A merge day helper script to go along with https://wiki.mozilla.org/Release_Management/Merge_Documentation"""
+"""
+    A merge day helper script to go along with
+    https://wiki.mozilla.org/Release_Management/Merge_Documentation
+"""
 
 import urllib2
 import os
@@ -8,11 +11,13 @@ import re
 import subprocess
 from subprocess import call
 
+
 def getTemplateValue(url):
     version_regex = re.compile(".*<p>(.*)</p>.*")
     template_page = urllib2.urlopen(url).read().replace('\n', '')
     parsed_template = version_regex.match(template_page)
     return parsed_template.groups()[0]
+
 
 def file_replace(fname, pat, s_after):
     try:
@@ -33,7 +38,7 @@ def file_replace(fname, pat, s_after):
         print fname, "does not exist"
         return
 
-#=========================================================================================================#
+#============================================================================#
 
 mozilla_central =  "./mozilla-central/"
 mozilla_aurora =	"./mozilla-aurora/"
@@ -53,7 +58,7 @@ call('hg pull -R '+ mozilla_central, shell=True)
 call('hg up -R '+mozilla_central, shell=True)
 mozilla_central_tag = "FIREFOX_AURORA_"+central_version+"_BASE"
 print mozilla_central_tag
-call('hg -R ' + mozilla_central + ' tag ' + mozilla_central_tag + '-m "Tagging for mozilla-central version bumps CLOSED TREE DONTBUILD" ', shell=True)
+call('hg -R ' + mozilla_central + ' tag ' + mozilla_central_tag + ' -m "Tagging for mozilla-central version bumps CLOSED TREE DONTBUILD" ', shell=True)
 raw_input("Latest mozilla-central has been pulled, updated and tagged...")
 raw_input("> version-bump mozilla-central (hit 'return' to proceed) <")
 

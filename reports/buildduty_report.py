@@ -107,19 +107,10 @@ def generateHTMLFooter():
     footer = """
 <script type="text/javascript">
 $(document).ready(function(){
-// Don't try to instantiate the sorter if the table is empty
-if ($("#nodeps") > 1) {
-    $("#nodeps").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
-}
-if ($("#depsresolved") > 1) {
-    $("#depsresolved").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
-}
-if ($("#depsopen") > 1) {
-    $("#depsopen").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
-}
-if ($("#loanreqs") > 1) {
-    $("#loanreqs").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
-}
+$("#nodeps").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
+$("#depsresolved").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
+$("#depsopen").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
+$("#loanreqs").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 });
 </script>
 

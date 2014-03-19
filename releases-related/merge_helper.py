@@ -8,9 +8,12 @@
 import urllib2
 import os
 import re
+import sys
 import subprocess
 from subprocess import call
 
+if sys.version_info < (2, 7):
+    raise SystemExit("Python 2.7 or later is needed to run this script.")
 
 def getTemplateValue(url):
     version_regex = re.compile(".*<p>(.*)</p>.*")

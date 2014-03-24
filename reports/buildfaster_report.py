@@ -165,6 +165,7 @@ _os_patterns = [
                          'b2g_mozilla-central_leo_eng_dep']),
         ('b2g_nexus-4_dep', ['b2g_mozilla-central_nexus-4_dep',
                              'b2g_mozilla-central_nexus-4_periodic',
+                             'b2g_mozilla-central_nexus-4_eng_periodic',
                              'b2g_mozilla-central_nexus-4_eng_dep']),
         ('b2g_panda_dep', ['b2g_mozilla-central_panda_dep',
                            'b2g_mozilla-central_panda_eng_dep']),

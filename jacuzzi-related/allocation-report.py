@@ -39,11 +39,6 @@ for m in machines:
             machine_builders.add(b)
     if machines[m] != machine_builders:
         logging.warning("Mismatch in machine builders for %s: %s", m, sorted(machines[m].difference(machine_builders)))
-    for b in machine_builders:
-        if "l10n" not in b:
-            break
-    else:
-        logging.warning("%s only has l10n builders configured", m)
     if len(machine_builders) > 2:
         logging.warning("%s has more than 2 builders", m)
 

@@ -19,11 +19,6 @@ def run(cmd):
         print "Unexpected error: cmd = |%s|" % cmd
         raise
 
-def getTemplateValue(url):
-    version_regex = re.compile(".*<p>(.*)</p>.*")
-    template_page = urllib2.urlopen(url).read().replace('\n', '')
-    parsed_template = version_regex.match(template_page)
-    return parsed_template.groups()[0]
 
 def file_replace(fname, pat, s_after):
     try:
@@ -46,12 +41,14 @@ def file_replace(fname, pat, s_after):
 
 
 def get_user_input():
-
     #Reading Version number
     version = raw_input("Enter the current Release Version ( eg : 24.0 , including a chemspill version if exists) \n")
     print "you entered ", version
     hg_user = raw_input("Enter the mercurial user name in the form \"username <email@mozilla.com>\" you will use to commit changes\n")
     print "the username you entered is", hg_user
+    # make sure to quote it
+    if '"' not in hg_user:
+        hg_user = '"%s"' % hg_user
     return version,hg_user
 
 
@@ -84,15 +81,23 @@ def pull_up_repo(repo_beta, repo_release):
     cmd = 'hg -R '+ repo_release + ' up -C default'
     run(cmd)
 
+
+def clone(repo, dest):
+    if os.path.isdir(dest):
+        run("hg -R %s strip -n 'outgoing()'" % dest)
+        run("hg -R %s pull" % dest)
+        run("hg -R %s update -C" % dest)
+    else:
+        run("hg clone %s %s" % (repo, dest))
+
 def main():
     #Clone Repos
-    cmd = 'hg clone http://hg.mozilla.org/releases/mozilla-release'
-    run(cmd)
-    cmd = 'hg clone http://hg.mozilla.org/releases/mozilla-beta'
-    run(cmd)
     mozilla_release = "./mozilla-release/"
     mozilla_beta = "./mozilla-beta/"
+    clone("http://hg.mozilla.org/releases/mozilla-release", mozilla_release)
+    clone("http://hg.mozilla.org/releases/mozilla-beta", mozilla_beta)
 
+    # TODO: we can read the current version from the beta repo
     version, hg_user = get_user_input()
     user_input = raw_input("Enter yes to begin with beta -> release merge day changes or no to exit\n")
     if user_input.lower() != "yes":
@@ -113,13 +118,10 @@ def main():
     print "RUNNING: tag_repo(%s, %s, %s, %s)" % (mozilla_beta, release_base_tag, beta_rev, hg_user)
     tag_repo(mozilla_beta, release_base_tag, beta_rev, hg_user)
     print "You have finished tagging mozilla-beta, now go ahead and push the mozilla-beta repo\n"
-    time.sleep(30)
     user_input1 = raw_input("Enter yes to continue if you have finished pushing mozilla-beta\n")
     if  user_input1.lower() != "yes" :
         print "Exiting now\n"
         return
-    print "RUNNING: tag_repo(%s, %s, %s, %s)" % (mozilla_beta, release_base_tag, beta_rev, hg_user)
-    tag_repo(mozilla_release, release_tag, release_rev, hg_user)
 
     #Commit,pull and update
     mozilla_release_revision = get_rev(mozilla_release)
@@ -130,6 +132,9 @@ def main():
     pull_up_repo(mozilla_beta, mozilla_release)
     print "RUNNING: commit_repo(%s, %s, %s, %s)" % (mozilla_release, hg_user, mozilla_release_revision, mozilla_beta_revision)
     commit_repo(mozilla_release, hg_user, mozilla_release_revision, mozilla_beta_revision)
+    # If we tag, eralier, debugsetparent ignores it
+    print "RUNNING: tag_repo(%s, %s, %s, %s)" % (mozilla_release, release_tag, release_rev, hg_user)
+    tag_repo(mozilla_release, release_tag, release_rev, hg_user)
 
 
 #Edit desktop config
@@ -165,7 +170,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-

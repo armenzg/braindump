@@ -46,7 +46,7 @@ def file_replace(fname, pat, s_after):
 
 def get_user_input():
     #Reading Version number
-    version = raw_input("Enter the current Release Version ( eg : 24.0 , including a chemspill version if exists) \n")
+    version = raw_input("Enter the currently shipping Release Version (eg : 27.0.1) \n")
     print "you entered ", version
     hg_user = raw_input("Enter the mercurial user name in the form \"username <email@mozilla.com>\" you will use to commit changes\n")
     print "the username you entered is", hg_user
@@ -65,7 +65,7 @@ def get_rev(repo):
         raise
 
 def tag_repo(repo, tag, rev, user):
-    cmd = 'hg tag -R ' + repo  + ' -r ' + rev + ' -u ' + user + ' -m ' +'" Added tag ' + tag + ' for changeset CLOSED TREE a=release " ' + tag
+    cmd = 'hg tag -R ' + repo  + ' -r ' + rev + ' -u ' + user + ' -m ' +'" Added tag ' + tag + ' for changeset CLOSED TREE DONTBUILD a=release " ' + tag
     run(cmd)
 
 def commit_repo(repo, user, old_head, new_head):
@@ -74,7 +74,7 @@ def commit_repo(repo, user, old_head, new_head):
     # non-fastforward issues in vcs-sync
     cmd = 'hg -R %s debugsetparents %s %s' % (repo, new_head, old_head)
     run(cmd)
-    cmd = 'hg -R %s commit -m "Merging old head via |hg debugsetparents %s %s|. CLOSED TREE a=release" -u %s' % (repo, new_head, old_head, user)
+    cmd = 'hg -R %s commit -m "Merging old head via |hg debugsetparents %s %s|. CLOSED TREE DONTBUILD a=release" -u %s' % (repo, new_head, old_head, user)
     run(cmd)
 
 def pull_up_repo(repo_beta, repo_release):
@@ -98,8 +98,8 @@ def main():
     #Clone Repos
     mozilla_release = "./mozilla-release/"
     mozilla_beta = "./mozilla-beta/"
-    clone("http://hg.mozilla.org/releases/mozilla-release", mozilla_release)
-    clone("http://hg.mozilla.org/releases/mozilla-beta", mozilla_beta)
+    clone("https://hg.mozilla.org/releases/mozilla-release", mozilla_release)
+    clone("https://hg.mozilla.org/releases/mozilla-beta", mozilla_beta)
 
     # TODO: we can read the current version from the beta repo
     version, hg_user = get_user_input()
@@ -126,6 +126,7 @@ def main():
     if  user_input1.lower() != "yes" :
         print "Exiting now\n"
         return
+    # TODO verify hg -r mozilla_beta out produces nothing
 
     #Commit,pull and update
     mozilla_release_revision = get_rev(mozilla_release)
@@ -143,7 +144,8 @@ def main():
 
 #Edit desktop config
 
-    raw_input("If you are ready to start with mozconfig changes, hit 'return' to continue...")
+    print "Code merge and tagging are complete."
+    print "Starting the channel & branding changes."
 
     if not file_replace(mozilla_release+"browser/confvars.sh", "ACCEPTED_MAR_CHANNEL_IDS=firefox-mozilla-beta,firefox-mozilla-release", "ACCEPTED_MAR_CHANNEL_IDS=firefox-mozilla-release"):
         print "Failed to replace channel ids in desktop config"
@@ -161,16 +163,18 @@ def main():
             if not file_replace(mozilla_release+bbd+bbf, "ac_add_options --with-branding=mobile/android/branding/beta", "ac_add_options --with-branding=mobile/android/branding/official"):
                 print "Failed to replace edots relating to Branding dir's in mobile mozconfig"
 
-    print("Now, go edit any mozilla-release/browser/locales/shipped-locales file if you need to remove some beta locales (eg: mn, sw)")
-    time.sleep(10)
-    raw_input("Hit 'return' to continue to diff's ...")
+    print "Now, go edit any mozilla-release/browser/locales/shipped-locales file if you need to remove some beta locales (eg: mn, sw)"
+    print "Also apply any manual edits, such as disabling features."
+    raw_input("Hit 'return' to display channel, branding, and feature diffs onscreen")
     cmd = 'hg diff -R '+ mozilla_release
     run(cmd)
-    raw_input("if the diff looks good hit return to continue to commit")
-    cmd = 'hg commit -R '+ mozilla_release + ' -u ' + hg_user +' -m "Updating configs CLOSED TREE a=release ba=release"'
+    print
+    print "Double check the diff above."
+    raw_input("If the diff looks good hit return to commit those changes:")
+    cmd = 'hg commit -R '+ mozilla_release + ' -u ' + hg_user +' -m "Updating configs CLOSED TREE DONTBUILD a=release ba=release"'
     run(cmd)
 
-    raw_input("Go ahead and push mozilla-release changes and you are done.")
+    print "Go ahead and push mozilla-release changes."
 
 if __name__ == "__main__":
     main()

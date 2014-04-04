@@ -9,6 +9,10 @@ import subprocess
 from subprocess import call
 import datetime
 import time
+import sys
+
+if sys.version_info < (2, 7):
+    raise SystemExit("Python 2.7 or later is needed to run this script.")
 
 def run(cmd):
     try:

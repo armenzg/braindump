@@ -9,11 +9,13 @@ import logging
 from db_credentials import scheduler_db_host, scheduler_db_name, scheduler_db_user, scheduler_db_pass, \
     status_db_host, status_db_name, status_db_user, status_db_pass
 
+scheduler_url = "mysql://" + scheduler_db_user + ":" + scheduler_db_pass + "@" + scheduler_db_host + "/" + scheduler_db_name
+schedulerdb = sa.create_engine(scheduler_url, pool_recycle=60)
+status_url = "mysql://" + status_db_user + ":" + status_db_pass + "@" + status_db_host + "/" + status_db_name
+statusdb = sa.create_engine(status_url, pool_recycle=60)
+
 one_day  = 86400
 two_days = one_day*2
-
-schedulerdb = sa.create_engine("mysql://buildbot_reader2:aequeG4ahtooz0qu@buildbot-ro-vip.db.scl3.mozilla.com/buildbot_schedulers", pool_recycle=60)
-statusdb = sa.create_engine("mysql://buildbot_reader2:aequeG4ahtooz0qu@buildbot-ro-vip.db.scl3.mozilla.com/buildbot", pool_recycle=60)
 
 builds_sql = """SELECT
              builders.name as buildername,

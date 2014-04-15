@@ -1,3 +1,4 @@
 # don't tempt folks to commit non-template mysql.ini files, in case a
 # password has been added
 it-related/.*.ini
+reports/db_credentials.py$

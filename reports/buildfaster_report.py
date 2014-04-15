@@ -6,6 +6,9 @@ import traceback
 import argparse
 import logging
 
+from db_credentials import scheduler_db_host, scheduler_db_name, scheduler_db_user, scheduler_db_pass, \
+    status_db_host, status_db_name, status_db_user, status_db_pass
+
 one_day  = 86400
 two_days = one_day*2
 

@@ -262,7 +262,7 @@ def get_suitename(buildername):
     return buildername.split()[-1]
 
 def get_submittime(schedulerdb, buildrow, props):
-    r_key = "buildfaster:submittime:%s" % buildrow.id    
+    r_key = "buildfaster:submittime:%s" % buildrow.id
     retval = cache.get(r_key)
     if retval:
         try:
@@ -408,41 +408,21 @@ def get_worktime(buildrow, props):
     cache.put(r_key, td2secs(worktime), two_days)
     return worktime
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("csvfile", type=str, help="CSV outputfile")
-    parser.add_argument("-v", "--verbose", help="Output debug info",
-                        action="store_true")
-    parser.add_argument("-a", "--assert_on_missing", help="Assert on missing lookups",
-                        action="store_true")
-    args = parser.parse_args()
-
-    logger = logging.getLogger('buildfaster')
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-        ch.setLevel(logging.DEBUG)
-    else :
-        logger.setLevel(logging.INFO)
-        ch.setLevel(logging.INFO)
-    logger.addHandler(ch)
-
-    if not args.csvfile:
-        logger.warning("csvfile not set!")
-        assert args.csvfile
-
-    # Do db query setup
-    builds_q = sa.text(builds_sql)
-    props_q = sa.text(props_sql)
-    submittime_q = sa.text(submittime_sql)
-    worksteps_q =  sa.text(worksteps_sql)
-
-    masters = json.load(urllib.urlopen("https://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
-
-    start = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+def parse_jobs():
+    start = None
+    last_processed_file = "buildfaster_last_processed_date"
+    import os.path
+    if os.path.isfile(last_processed_file):
+        with open(last_processed_file, 'r') as f:
+            start = f.readline()
+    date_re = re.compile('\d\d\d\d-\d\d-\d\d')
+    if start is None or date_re.match(start) is None:
+        start = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
     today = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    if start >= today:
+        logger.info("Dates already processed. Nothing to do.")
+        return None
 
     t = time.time()
     builds = get_builds('mozilla-central', start, today)
@@ -513,3 +493,43 @@ if __name__ == "__main__":
             finished_at.strftime("%Y-%m-%dT%H:%M:%S"), elapsed_time, work_time,
             buildername, slavename])
         logger.debug("%s %s %s %s", buildrow.buildername, uid, os, jobtype)
+
+    # Set our date marker to avoid unnecessary processing next time.
+    f = open(last_processed_file, 'w')
+    f.write(today)
+    f.close()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("csvfile", type=str, help="CSV outputfile")
+    parser.add_argument("-v", "--verbose", help="Output debug info",
+                        action="store_true")
+    parser.add_argument("-a", "--assert_on_missing", help="Assert on missing lookups",
+                        action="store_true")
+    args = parser.parse_args()
+
+    logger = logging.getLogger('buildfaster')
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        ch.setLevel(logging.DEBUG)
+    else :
+        logger.setLevel(logging.INFO)
+        ch.setLevel(logging.INFO)
+    logger.addHandler(ch)
+
+    if not args.csvfile:
+        logger.warning("csvfile not set!")
+        assert args.csvfile
+
+    # Do db query setup
+    builds_q = sa.text(builds_sql)
+    props_q = sa.text(props_sql)
+    submittime_q = sa.text(submittime_sql)
+    worksteps_q =  sa.text(worksteps_sql)
+
+    masters = json.load(urllib.urlopen("https://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
+
+    parse_jobs()

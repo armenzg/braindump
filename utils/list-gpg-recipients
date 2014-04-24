@@ -14,6 +14,7 @@ import argparse
 import os
 import re
 import sys
+import json
 
 grab_id = re.compile(r'''^(gpg):.*ID\s+(?P<gpg_id>\w+)?''')
 
@@ -66,7 +67,8 @@ def update_keys_needed(file_list):
     for key in keys:
         valid, who = check_key_validity(key)
         if not valid:
-            sys.stderr.write("WARNING: key %s is not valid\n" % who)
+            sys.stderr.write("WARNING: you don't consider key %s valid\n" %
+                             who)
 
 
 def check_files(file_list):
@@ -79,7 +81,24 @@ def check_files(file_list):
         raise SystemExit("Invalid arguments")
 
 
+def read_exclude_file(file_name):
+    '''Extract the key IDs to exclude, if file exists'''
+    ids = set()
+    try:
+        data = json.load(open(file_name, 'r'))
+        ids = [x['id'] for x in data]
+    except:
+        # ignore this for now, probably should scream if user specified file
+        # name, and we did not find that
+        pass
+    return ids
+
+
 def main():
+    # get the directory of the script, to use as default of directory of alumni
+    # file
+    alumni_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               './alumni.json')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--only', dest='user',
                         help='only display files USER can decrypt',
@@ -87,10 +106,16 @@ def main():
     parser.add_argument('-r', action='store_true', default=False,
                         dest="ids_only",
                         help='format for use as recipients for encryption')
+    # you can "defeat" the default alumni file in two ways:
+    #   - specify /dev/null as the file
+    #   - explicitly add the person as a recipient when encrypting
+    parser.add_argument('--alumni', metavar='ALUMS', default=alumni_file,
+                        help="a json file of ID's no longer in group")
     parser.add_argument('files', metavar='FILE', nargs='+',
                         help='a GPG/PGP encrypted file')
     args = parser.parse_args()
     check_files(args.files)
+    exclude_ids = read_exclude_file(args.alumni)
     keys = set()
     if not args.ids_only:
         update_keys_needed(args.files)
@@ -99,7 +124,7 @@ def main():
             gpg_id = grab_id.match(l)
             if gpg_id:
                 this_id = gpg_id.groupdict()['gpg_id']
-                if args.ids_only:
+                if args.ids_only and this_id not in exclude_ids:
                     keys.add("-r 0x{0}".format(this_id))
             elif not args.ids_only:
                 this_user = "{1} 0x{0}".format(this_id, l.strip())
@@ -108,6 +133,8 @@ def main():
                         keys.add(f)
                         break
                 else:
+                    if this_id in exclude_ids:
+                        this_user = "ALUMNI: %s" % this_user
                     keys.add(this_user)
     values = list(keys)
     values.sort()

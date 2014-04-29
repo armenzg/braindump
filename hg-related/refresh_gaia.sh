@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/sh -x
 
 FROM_URL="https://hg.mozilla.org/gaia-l10n"
 TO_URL="ssh://hg.mozilla.org/releases/gaia-l10n/v1_4/"

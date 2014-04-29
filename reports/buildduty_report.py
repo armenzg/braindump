@@ -141,10 +141,10 @@ if __name__ == "__main__":
         found_open_deps = False
         for dep_bug in bug['depends_on']:
             if not dep_bug in dep_tracker:
-                current_bug = bug_query_to_object('https://bugzilla.mozilla.org/rest/bug/%s' % dep_bug)
-                if current_bug:
+                bug_objects = bug_query_to_object('https://bugzilla.mozilla.org/rest/bug/%s' % dep_bug)
+                if bug_objects and 'bugs' in bug_objects:
                     try:
-                        dep_tracker[dep_bug] = current_bug['status']
+                        dep_tracker[dep_bug] = bug_objects['bugs'][0]['status']
                     except:
                         # Something has gone wrong with the lookup (bug is confidential?)
                         # so assume it's still open.

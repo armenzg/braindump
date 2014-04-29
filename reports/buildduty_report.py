@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import argparse
 import datetime
+import json
 import re
-from bugzilla.agents import BMOAgent
+import requests
 from operator import attrgetter
 
 dep_tracker = {}
@@ -78,25 +79,26 @@ def generateBugTable(table_id, title, bugs, css_class=None, strike_deps=False, l
     table = "<table id=\"{0}\" class=\"{1}\">\n".format(table_id, css_class)
     table += "<thead><tr><th>Bug&nbsp;ID</th><th>Summary</th><th>Last Updated</th><th>Depends On</th></tr></thead>\n"
 
-    for bug in sorted(bugs, key=attrgetter('last_change_time'), reverse=False):
-        summary = re.sub(r'(.*) (problem tracking)', r'<a target="_\1_slave_health" href="slave.html?name=\1">\1</a> \2', bug.summary)
-        table += "<tr><td><a href=\"https://bugzil.la/{0}\">Bug&nbsp;{0}</a></td><td>{1}</td><td>{2}</td>\n".format(bug.id, summary, bug.last_change_time)
-        table += "<td>"
-        if not bug.depends_on:
-            table += "None"
-        else:
-            for dep_bug in bug.depends_on:
-                strike_open = ''
-                strike_close = ''
-                if dep_bug in dep_tracker and dep_tracker[dep_bug] in ['RESOLVED', 'VERIFIED']:
-                    strike_open = '<s>'
-                    strike_close = '</s>'
-                table += "{0}<a href=\"https://bugzil.la/{1}\">{1}</a>{2}, ".format(strike_open, dep_bug, strike_close)
-            table = table[:-2]
-        table += "</td>\n</tr>\n"
+    if bugs:
+        for bug in sorted(bugs, key=lambda a: a['last_change_time'], reverse=False):
+            summary = re.sub(r'(.*) (problem tracking)', r'<a target="_\1_slave_health" href="slave.html?name=\1">\1</a> \2', bug['summary'])
+            table += "<tr><td><a href=\"https://bugzil.la/{0}\">Bug&nbsp;{0}</a></td><td>{1}</td><td>{2}</td>\n".format(bug['id'], summary, bug['last_change_time'])
+            table += "<td>"
+            if not bug['depends_on']:
+                table += "None"
+            else:
+                for dep_bug in bug['depends_on']:
+                    strike_open = ''
+                    strike_close = ''
+                    if dep_bug in dep_tracker and dep_tracker[dep_bug] in ['RESOLVED', 'VERIFIED']:
+                        strike_open = '<s>'
+                        strike_close = '</s>'
+                    table += "{0}<a href=\"https://bugzil.la/{1}\">{1}</a>{2}, ".format(strike_open, dep_bug, strike_close)
+                table = table[:-2]
+            table += "</td>\n</tr>\n"
     table += "</table>\n\n"
     table_header = "<strong>%s</strong> <a name =\"%s\" target=\"builddutybugzilla\" href=\"https://bugzilla.mozilla.org/buglist.cgi?bug_id=%s\"><img class=\"bugzilla\" src=\"icons/bugzilla.png\" alt=\"View list in Bugzilla\" title=\"View list in Bugzilla\" /></a>" % \
-        (title, table_id, ','.join(str(bug.id) for bug in bugs))
+        (title, table_id, ','.join(str(bug['id']) for bug in bugs))
     if links != "":
         table_header += " | <small>%s</small>" % links
     table_header += "\n"
@@ -121,27 +123,28 @@ $("#loanreqs").tablesorter({sortList:[[2,1]], widgets: ["zebra"]});
 """
     return footer
 
+def bug_query_to_object(URL):
+    r = requests.get(URL)
+    bug_json = r.text
+    return json.loads(bug_json)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
 
-    # Load our agent for BMO
-    bmo = BMOAgent(username, password)
+    bug_list = bug_query_to_object('http://bugzilla.mozilla.org/rest/bug?status=UNCONFIRMED&status=NEW&status=ASSIGNED&status=REOPENED&product=Release%20Engineering&component=Buildduty&summary=problem%20tracking&summary_type=contains&include_fields=id,summary,attachments,depends_on,last_change_time')
 
-    # Get the bugs from the api
-    bug_list = bmo.get_bug_list(options)
-
-    for bug in bug_list:
-        if not bug.depends_on:
+    for bug in bug_list['bugs']:
+        if not bug['depends_on']:
             no_deps.append(bug)
             continue
         found_open_deps = False
-        for dep_bug in bug.depends_on:
+        for dep_bug in bug['depends_on']:
             if not dep_bug in dep_tracker:
-                current_bug = bmo.get_bug(dep_bug)
+                current_bug = bug_query_to_object('https://bugzilla.mozilla.org/rest/bug/%s' % dep_bug)
                 if current_bug:
                     try:
-                        dep_tracker[dep_bug] = current_bug.status
+                        dep_tracker[dep_bug] = current_bug['status']
                     except:
                         # Something has gone wrong with the lookup (bug is confidential?)
                         # so assume it's still open.
@@ -157,7 +160,7 @@ if __name__ == "__main__":
         if not found_open_deps:
             deps_resolved.append(bug)
 
-    loan_requests = bmo.get_bug_list(loan_request_options)
+    loan_requests = bug_query_to_object('https://bugzilla.mozilla.org/rest/bug?status=UNCONFIRMED&status=NEW&status=ASSIGNED&status=REOPENED&product=Release%20Engineering&component=Loan%20Requests&assigned_to=nobody@mozilla.org&include_fields=id,summary,attachments,depends_on,last_change_time')
 
     f = open(html_file, 'w')
     f.write(generateHTMLHeader())
@@ -199,7 +202,7 @@ if __name__ == "__main__":
     f.write("\n<hr/>\n")
     f.write(generateBugTable('loanreqs',
                              'Loan requests (new)',
-                             loan_requests,
+                             loan_requests['bugs'],
                              strike_deps=True,
                              links=generateInPageLinks([no_deps_desc,
                                                         deps_open_desc,

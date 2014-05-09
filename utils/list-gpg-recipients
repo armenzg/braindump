@@ -16,7 +16,15 @@ import re
 import sys
 import json
 
-grab_id = re.compile(r'''^(gpg):.*ID\s+(?P<gpg_id>\w+)?''')
+grab_id = re.compile(r'''^(gpg):.*ID\s+(0x)?(?P<gpg_id>\w+)?''')
+# tweaking regex's is hard -- we expect the above to match both:
+test_matches = [
+    "gpg: encrypted with 2048-bit ELG key, ID FFFFFFFF, created",
+    "gpg: encrypted with 2048-bit RSA key, ID 0xFFFFFFFFFFFFFFFF, created",
+]
+# testing every time is easy:
+for s in test_matches:
+    assert(grab_id.match(s).groupdict()['gpg_id'].startswith('FFFFFFFF'))
 
 get_key_ids = gpg.bake('--no-default-keyring', '--secret-keyring', '/dev/null',
                        '--list-only', _iter='err')

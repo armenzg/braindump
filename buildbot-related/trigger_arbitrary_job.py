@@ -17,22 +17,28 @@ import requests
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--buildername', dest='buildername')
-parser.add_argument('--rev', dest='revision')
-parser.add_argument('--branch', dest='branch')
+parser.add_argument('--buildername', dest='buildername', required=True)
+parser.add_argument('--branch', dest='branch', required=True)
+parser.add_argument('--rev', dest='revision', required=True)
 parser.add_argument('--file', dest='files', action='append')
 args = parser.parse_args()
 
+branch = args.branch
 revision = args.revision
 buildername = args.buildername
-branch = args.branch
+files = args.files
+
+# Check that files is either 0 (build job) or 2 (test job: installer + tests.zip)
+# XXX: Talos might be one file, I'm not sure
+assert len(files) != 1, "You can either have no files or two files specified"
+assert len(files) <= 2, "You have specified more than 2 files"
 
 payload = {}
 # Adding the properties here are to allow tbpl to show the job
 # as they're running
 # Currently broken - bug 981825
 payload['properties'] = json.dumps({"branch": branch, "revision": revision})
-payload['files'] = json.dumps(args.files)
+payload['files'] = json.dumps(files)
 
 url = r'''https://secure.pub.build.mozilla.org/buildapi/self-serve/%s/builders/%s/%s''' % \
         (branch, buildername, revision)

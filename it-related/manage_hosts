@@ -81,19 +81,34 @@ def ping():
 
 
 def verify_up():
+    if env['host'].startswith('w'):
+        print "%(host)s skipped" % env
+        return
     with quiet():
         if run('exit').failed:
             print "%(host)s FAIL" % env
 
 
 def reboot():
+    if env['host'].startswith('w'):
+        print "%(host)s skipped" % env
+        return
     with warn_only():
         run('/sbin/reboot')
 
 
 def shut_down():
+    if env['host'].startswith('w'):
+        print "%(host)s skipped" % env
+        return
     with warn_only():
         run('shutdown -h now major work')
+
+def gen_nagios_downtimes(duration='2d', reason='DC move'):
+    context = locals()
+    context.update(env)
+    print("nagios-releng: downtime %(host)s %(duration)s %(reason)s" %
+        context)
 EOF
     } > $tmpdir/fabfile.py
     mv $tmpdir/fabfile.py $fabfile

@@ -43,16 +43,23 @@ Host Management Operations
 ==========================
 
 There is one fabric script to manage the boxes in terms of shutdown and
-reboot -- ``manage_hosts``. It has three subcommands:
+reboot -- ``manage_hosts``. It has several subcommands:
+
+    - ``ping`` -- ping the boxes to see if they are reachable. (just
+      does one attempt.
 
     - ``verify_up`` -- used to ensure boxes are back online. Also
       can be used to verify proper credentials in advance of "real"
-      usage.
+      usage. (windows boxes are skipped)
 
     - ``reboot`` -- reboot all boxes. Typically done after the slaves
-      are re-enabled in slavealloc
+      are re-enabled in slavealloc (windows boxes are skipped)
 
-    - ``shutdown`` -- shutdown all boxes.
+    - ``shutdown`` -- shutdown all boxes. (windows boxes are skipped)
+
+    - ``gen_nagios_downtimes`` -- the irc nagios-bot can be used to
+      downtime hosts. This prints the irc commands to stdout. You need
+      to copy/paste to the right channel.
 
 All of these are passed the common input file. All commands use ``root``
 credentials for login. (The ``cltbld`` account doesn't have rights to

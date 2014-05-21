@@ -2,8 +2,14 @@
 set -e
 master_dir=master_dir
 dump_master="$(dirname $0)/dump_master.py"
-extra_args="$@"
-for master_name in $(python setup-master.py $extra_args -l); do
+
+if [ ".$@" != "." ] ; then
+    extra_args="$@"
+else
+    extra_args="--tested-only"
+fi
+
+for master_name in $(python setup-master.py $extra_args -l | grep -v universal); do
     rm -rf $master_dir
     mkdir $master_dir
     echo "Master ${master_name}"

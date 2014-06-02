@@ -26,7 +26,7 @@ for l in `wget -q -O- http://$HG_HOST/releases/$repo/raw-file/default/browser/lo
     release_rev=`hg -R $l id -i -r default`
     beta_rev=`hg -R $l.beta id -i -r default`
     if [ $release_rev == $beta_rev ] ; then
-        echo "Same beta/release rev; skipping"
+        echo "Same beta/release rev on $l; skipping"
         continue
     fi
     hg -R $l pull $l.beta

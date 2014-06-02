@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+"""
+    simple script to rename bugzill aliases on hosts that have been renamed, if
+    they already exist.
+
+    Usage: rename_host_bugs old-new-short-names-file
+    Where: old-new-short-names-file is output of "map_hosts --short"
+
+    Note: you need to manually enter your bugzilla username & password if you
+          want to make changes. Otherwise, update attempts will fail.
+
+    ToDo:
+        - add proper arguements
+        - add some decent help
+        - read as csv file? (not sure, as it will "fail safe")
+"""
+
+import logging
+import pprint
+import sys
+
+import bzrest.client
+from bzrest.errors import BugNotFound
+
+username = None
+password = None
+
+logger = logging.getLogger(__name__)
+
+
+def rename_tracker_bug(bz, old_name, new_name):
+    try:
+        old_resp = bz.get_bug(old_name)
+        has_old_bug = True
+    except BugNotFound:
+        has_old_bug = False
+    try:
+        new_resp = bz.get_bug(new_name)
+        has_new_bug = True
+    except BugNotFound:
+        has_new_bug = False
+    summary = "%s problem tracking" % (new_name,)
+    if has_old_bug and not has_new_bug:
+        logger.info("Updating old (%s) to new (%s)", old_name, new_name)
+        resp = bz.update_bug(old_name, {'alias': new_name, 'summary': summary})
+    elif has_new_bug and not has_old_bug:
+        # check for alias as part of summary
+        if not new_resp['summary'] == summary:
+            logger.warn("fixing bad summary on %s", new_name)
+            resp = bz.update_bug(new_name, {'summary': summary})
+    elif not has_old_bug:
+        logger.info("No old bug (%s)", old_name)
+    elif has_new_bug:
+        logger.error("Both old (%s) and new (%s) exist", old_name, new_name)
+        logger.error("     old opened %s", old_resp['creation_time'])
+        logger.error("     new opened %s", new_resp['creation_time'])
+
+def main():
+    bz = bzrest.client.BugzillaClient()
+    bz.configure('https://bugzilla.mozilla.org/rest', username, password)
+    with open(sys.argv[1], 'r') as renames:
+        for line in renames.readlines():
+            old_name, new_name = line.strip().split(',')
+            rename_tracker_bug(bz, old_name, new_name)
+    return 0
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(message)s')
+    raise SystemExit(main())

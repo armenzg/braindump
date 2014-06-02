@@ -13,6 +13,25 @@ All the scripts take as input a text file with the FQDN of the hosts to
 operate upon. (In column 1 if this is a CSV format file.) The first line
 is skipped, on the assumption it is the column header text.
 
+Move Support
+============
+
+When moving hosts between data centers, there are 2 scripts to generate
+and perform some operations where host names change:
+
+    ``move_hosts``:
+        Convert spreadsheets exported as CSV into data lists consumed by
+        other tasks, including:
+
+            - SQL for update slavealloc database
+            - SQL for update graphserver database
+            - List as consumed by other scripts listed below
+
+    ``rename_host_bugs``:
+        Change the alias & summary fields on the per host tracker bugs.
+
+.. note:: Some data hardcoded for SCL1 to SCL3 move.
+
 Slavealloc Operations
 =====================
 

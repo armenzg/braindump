@@ -25,9 +25,13 @@ for l in `wget -q -O- http://$HG_HOST/releases/$repo/raw-file/default/browser/lo
     hg clone http://$HG_HOST/$beta_repo_path/$l $l.beta
     release_rev=`hg -R $l id -i -r default`
     beta_rev=`hg -R $l.beta id -i -r default`
+    if [ $release_rev == $beta_rev ] ; then
+        echo "Same beta/release rev; skipping"
+        continue
+    fi
     hg -R $l pull $l.beta
     hg -R $l up -C default
-    heads=`hg -R $l heads --template '{rev}\n' default|wc -l`
+    heads=`hg -R $l heads --template '{rev}\n' default|wc -l|sed -e 's/ *//'`
     if [ "x$heads" != "x1" ]; then
         hg -R $l up -C -r $beta_rev
         HGMERGE=true hg -R $l merge -r $release_rev

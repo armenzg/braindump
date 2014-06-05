@@ -46,4 +46,4 @@ r = requests.post(url, data=payload)
 print r.status_code
 # We can't yet see the jobs - bug 981825
 #print "See your running jobs in here:"
-#print "https://secure.pub.build.mozilla.org/buildapi/revision/%s-selfserve/%s" % (branch, revision)
+#print "https://secure.pub.build.mozilla.org/buildapi/revision/%s/%s" % (branch, revision)

@@ -26,7 +26,7 @@ args = parser.parse_args()
 branch = args.branch
 revision = args.revision
 buildername = args.buildername
-files = args.files
+files = args.files or []
 
 # Check that files is either 0 (build job) or 2 (test job: installer + tests.zip)
 # XXX: Talos might be one file, I'm not sure

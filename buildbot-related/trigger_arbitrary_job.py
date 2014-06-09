@@ -33,6 +33,8 @@ def all_files_are_reachable(files):
     '''
     reachable_files = True
     for file in files:
+        if file.startswith('http://pvtbuilds'):
+            continue
         r = requests.head(file)
         if r.status_code != 200 and r.status_code != 401:
             # 401 files to us can be reachable within the releng network

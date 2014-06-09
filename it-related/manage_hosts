@@ -24,9 +24,9 @@ trap cleanup EXIT
 
 while test $# -gt 0; do
     case "$1" in
-    -h|--help) usage ;;
-    -*) usage "unsupported option '$1'" ;;
-    *) break ;;
+        -h|--help) usage ;;
+        -*) usage "unsupported option '$1'" ;;
+        *) break ;;
     esac
     shift
 done
@@ -49,6 +49,7 @@ if test $hosts -nt $fabfile -o ! -r $fabfile; then
     # create fab file
     {
         cat <<EOF
+import os
 from fabric.api import env, warn_only, run, local, quiet
 from fabric import state
 
@@ -104,11 +105,20 @@ def shut_down():
     with warn_only():
         run('shutdown -h now major work')
 
-def gen_nagios_downtimes(duration='2d', reason='DC move'):
+def gen_nagios_downtimes(duration='2d', reason='DC move', format='moc'):
     context = locals()
     context.update(env)
-    print("nagios-releng: downtime %(host)s %(duration)s %(reason)s" %
-        context)
+    context['USER'] = os.environ.get('USER', 'releng')
+    if format is 'moc':
+        # format for oncall to run on nagios host and thus reduce 
+        # spam in #sysadmins
+        print('''/data/bin/schedule-downtime.pl --host %(host)s'''
+              ''' --downfor '%(duration)s' --by %(USER)s'''
+              ''' --comment '%(reason)s' ''' % context)
+    else:
+        # irc bot format
+        print("nagios-releng: downtime %(host)s %(duration)s %(reason)s" %
+            context)
 EOF
     } > $tmpdir/fabfile.py
     mv $tmpdir/fabfile.py $fabfile

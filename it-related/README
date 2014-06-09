@@ -76,9 +76,11 @@ reboot -- ``manage_hosts``. It has several subcommands:
 
     - ``shutdown`` -- shutdown all boxes. (windows boxes are skipped)
 
-    - ``gen_nagios_downtimes`` -- the irc nagios-bot can be used to
-      downtime hosts. This prints the irc commands to stdout. You need
-      to copy/paste to the right channel.
+    - ``gen_nagios_downtimes`` -- Produces output that 'oncall' can use
+      to update nagios without spamming an IRC channel. If you do want
+      to use the irc nagios-bot to downtime hosts, append
+      "``:format=irc``" . This prints the irc commands to stdout. You
+      need to copy/paste to the right channel.
 
 All of these are passed the common input file. All commands use ``root``
 credentials for login. (The ``cltbld`` account doesn't have rights to

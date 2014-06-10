@@ -12,7 +12,7 @@ deps_open = []
 deps_resolved = []
 unknown = []
 
-html_file='/home/buildduty/slave_health/slave_health/'
+html_file='/home/buildduty/slave_health/slave_health/buildduty_report.html'
 username = ''
 password = ''
 

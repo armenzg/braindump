@@ -46,9 +46,9 @@ def all_files_are_reachable(files):
 
 assert all_files_are_reachable(files), "All files should be reachable"
 
-# Check that files is either 0 (build job) or 2 (test job: installer + tests.zip)
-# XXX: Talos might be one file, I'm not sure
-assert len(files) != 1, "You can either have no files or two files specified"
+# Build jobs require no file
+# Talos jobs require the installer
+# Test jobs require the installer + a tests.zip
 assert len(files) <= 2, "You have specified more than 2 files"
 
 payload = {}

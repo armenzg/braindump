@@ -73,7 +73,7 @@ for c in g['c']['change_source']:
 print
 
 print "Schedulers:"
-for s in g['c']['schedulers']:
+for s in sorted(g['c']['schedulers'], key=lambda s: s.name):
     d = {}
     if hasattr(s, 'compare_attrs'):
         for a in s.compare_attrs:

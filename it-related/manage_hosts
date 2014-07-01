@@ -113,7 +113,7 @@ def gen_nagios_downtimes(duration='2d', reason='DC move', format='moc'):
         # format for oncall to run on nagios host and thus reduce 
         # spam in #sysadmins
         print('''/data/bin/schedule-downtime.pl --host %(host)s'''
-              ''' --downfor '%(duration)s' --by %(USER)s'''
+              ''' --down-for '%(duration)s' --by %(USER)s'''
               ''' --comment '%(reason)s' ''' % context)
     else:
         # irc bot format

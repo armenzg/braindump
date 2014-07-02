@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+'''
+    Take a group of csv files, update data center in devices.json
+
+    Various output formats supported, see --help for details.
+
+'''
+
+import argparse
+import copy
+import csv
+import json
+import logging
+import os
+import sys
+
+logger = logging.getLogger(__name__)
+
+
+def update_devices(file_list, devices):
+    for f in file_list:
+        if not os.path.exists(f):
+            logging.error("No such file '%s'", f)
+        else:
+            csv_file = csv.DictReader(open(f, 'r'))
+            for row in csv_file:
+                host_fqdn = row['old-hostname']
+                host = host_fqdn.split('.', 1)[0]
+                if host in devices:
+                    d = devices[host]
+                    try:
+                        for key in ['pdu', 'relayhost']:
+                            if key in d:
+                                break
+                        d[key] = d[key].replace('scl1', 'scl3')
+                    except KeyError:
+                        logging.error("something's wrong for '%s'", host)
+                        break
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--devices', '-d', dest='device_file', default=None,
+                        help='json file (defaults to stdin)')
+    parser.add_argument('files', metavar='FILE', nargs='+',
+                        help='csv format file with header')
+    args = parser.parse_args()
+    # sanity checks
+    if args.device_file is None:
+        fp = sys.stdin
+    else:
+        fp = open(args.device_file, 'r')
+    devices = json.load(fp)
+    new_devices = copy.deepcopy(devices)
+    update_devices(args.files, new_devices)
+    if (devices == new_devices) or (sorted(devices.keys()) !=
+                                    sorted(new_devices.keys())):
+        raise SystemExit('unexpected result, please review by hand')
+    # set separators to ensure no trailing newline
+    json.dump(new_devices, sys.stdout, sort_keys=True,
+              indent=4, separators=(',', ': '))
+    print   # add newline to last line
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+    sys.exit(main())

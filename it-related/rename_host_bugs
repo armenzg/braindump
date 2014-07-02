@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 
 
 def rename_tracker_bug(bz, old_name, new_name):
+    if old_name == new_name:
+        # nothing to do
+        return
     try:
         old_resp = bz.get_bug(old_name)
         has_old_bug = True

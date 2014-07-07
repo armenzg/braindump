@@ -105,6 +105,14 @@ def shut_down():
     with warn_only():
         run('shutdown -h now major work')
 
+
+def shutdown_pandas():
+    with warn_only():
+        run('''for f in $(ls -1d /builds/panda-*); do
+                touch $f/shutdown.stamp
+            done''')
+
+
 def gen_nagios_downtimes(duration='2d', reason='DC move', format='moc'):
     context = locals()
     context.update(env)

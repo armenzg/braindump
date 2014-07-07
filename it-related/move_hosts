@@ -5,8 +5,6 @@
 
     Various output formats supported, see --help for details.
 
-    .. todo:: add generation of slavealloc update sql script.
-    .. todo:: add csv output
 '''
 
 import argparse
@@ -77,6 +75,7 @@ def main():
                         help='csv format file with header')
     args = parser.parse_args()
     # sanity checks
+    changed_only = False
     if args.sql_graphserver and args.sql_slavealloc:
         parser.error("Can only specify one SQL output at a time")
     elif args.sql_graphserver or args.sql_slavealloc:
@@ -85,7 +84,8 @@ def main():
         elif args.new_first:
             parser.error("new first incompatible with SQL output")
         else:
-            # Any SQL implies --short
+            # Any SQL implies --short & that we only want changes
+            changed_only = True
             args.short_names = True
     host_map = check_files(args.files, args.old_key, args.new_key,
                            args.short_names, args.filter_key,
@@ -108,6 +108,9 @@ def main():
         ctx['new'] = args.new_key
         print template % ctx
     for ctx['old'], ctx['new'] in sorted(host_map.items()):
+        # for sql output, only generate a line if change
+        if changed_only and ctx['old'] == ctx['new']:
+            continue
         print template % ctx
     return 0
 

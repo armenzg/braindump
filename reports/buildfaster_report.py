@@ -228,6 +228,7 @@ _ignore_patterns = [
         'hg bundle',
         'xulrunner',
         'blocklist update',
+        'periodic file update',
         'valgrind',
         'hsts',
         'dxr',

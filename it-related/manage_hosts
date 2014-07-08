@@ -107,6 +107,10 @@ def shut_down():
 
 
 def shutdown_pandas():
+    # runs on foopies only
+    if env['host'].startswith('foopy-'):
+        print "%(host)s skipped" % env
+        return
     with warn_only():
         run('''for f in $(ls -1d /builds/panda-*); do
                 touch $f/shutdown.stamp

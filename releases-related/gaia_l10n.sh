@@ -7,6 +7,8 @@ set -e
 # hg push line below.
 HG_USER="ffxbld <release@mozilla.com>"
 HG_HOST=hg.mozilla.org
+# IGNORE_LOCALES is here because these locales had zero checkins, and so no 'default' branch
+# We probably want to clear out this list, and add to it as we hit that issue; alternately we can get rid of it and allow for no default branch to just skip the locale.
 IGNORE_LOCALES="af zu"
 BRANCH=v2.0
 TO_REPO_PATH=releases/gaia-l10n/v2_0

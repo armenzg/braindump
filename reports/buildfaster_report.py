@@ -176,6 +176,8 @@ _os_patterns = [
                            'b2g_mozilla-central_panda_eng_dep']),
         ('b2g_unagi_dep', ['b2g_mozilla-central_unagi_dep',
                            'b2g_mozilla-central_unagi_eng_dep']),
+        ('b2g_dolphin', ['b2g_mozilla-central_dolphin_periodic',
+                         'b2g_mozilla-central_dolphin_eng_periodic']),
         ('b2g_emulator', ['b2g_mozilla-central_emulator', 'b2g_emulator']),
         ('b2g_linux32', ['b2g_mozilla-central_linux32_gecko',
                          'b2g_mozilla-central_linux32_gecko_locali|zer']),
@@ -263,7 +265,7 @@ def get_suitename(buildername):
     return buildername.split()[-1]
 
 def get_submittime(schedulerdb, buildrow, props):
-    r_key = "buildfaster:submittime:%s" % buildrow.id    
+    r_key = "buildfaster:submittime:%s" % buildrow.id
     retval = cache.get(r_key)
     if retval:
         try:

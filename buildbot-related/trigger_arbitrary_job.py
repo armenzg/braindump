@@ -7,20 +7,20 @@
 #
 # SETUP:
 # * Install requests
-# * Add your credentials to ~/.netrc
-#
-# .NETRC:
-# * Place it under $HOME with this format (one line):
-# machine secure.pub.build.mozilla.org login your_email password your_pswd
-import json
-import requests
+
 import argparse
+import getpass
+import json
+
+import requests
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--buildername', dest='buildername', required=True)
 parser.add_argument('--branch', dest='branch', required=True)
 parser.add_argument('--rev', dest='revision', required=True)
 parser.add_argument('--file', dest='files', action='append')
+parser.add_argument('--user', dest='user', default=None)
+parser.add_argument('--password', dest='password', default=None)
 args = parser.parse_args()
 
 branch = args.branch
@@ -58,7 +58,20 @@ payload['files'] = json.dumps(files)
 
 url = r'''https://secure.pub.build.mozilla.org/buildapi/self-serve/%s/builders/%s/%s''' % \
         (branch, buildername, revision)
-r = requests.post(url, data=payload)
+
+def make_request():
+    auth = None
+    if args.user and not args.password:
+        args.password = getpass.getpass(prompt="LDAP password: ")
+
+    if args.user and args.password:
+        auth = (args.user, args.password)
+    return requests.post(url, data=payload, auth=auth)
+
+r = make_request()
+if 400 <= int(r.status_code) < 500:
+    args.user = raw_input("LDAP username: ")
+    r = make_request()
 
 print "You return code is: %s" % r.status_code
 print "See your running jobs in here:"

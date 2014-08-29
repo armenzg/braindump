@@ -19,6 +19,10 @@ def add_mkdir(d):
         instructions.append("mkdir \"%s\"" % d)
         created_dirs.add(d)
 
+# create the root dir
+instructions.append("mkdir \"%s\"" % dir_)
+created_dirs.add(dir_)
+
 for top, dirs, files in walk(dir_):
     for f in files:
         if f.endswith(".dmg"):

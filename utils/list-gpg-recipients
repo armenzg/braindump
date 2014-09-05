@@ -125,8 +125,8 @@ def main():
     check_files(args.files)
     exclude_ids = read_exclude_file(args.alumni)
     keys = set()
-    if not args.ids_only:
-        update_keys_needed(args.files)
+    #if not args.ids_only:
+        #update_keys_needed(args.files)
     for f in args.files:
         for l in get_key_ids(f):
             gpg_id = grab_id.match(l)

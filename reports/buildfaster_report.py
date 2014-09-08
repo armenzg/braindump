@@ -348,6 +348,7 @@ _worksteps = [
         ('(Linux|OS X|WINNT).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar', 'run_script', 'check']),
         ('b2g', ['compile', 'make_pkg', 'run_script']),
         ('B2G', ['compile', 'make_pkg', 'run_script']),
+        ('.*web-platform-tests.*', ['run_script']),
         ]
 
 def get_worktime(buildrow, props):

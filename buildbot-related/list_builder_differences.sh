@@ -13,7 +13,7 @@ done
 
 if [ -z "$patch_to_test" ];
 then
-    echo "Please pass the path to the patch you want information about."
+    echo "Please pass the path to the patch you want information about with -j path_to_patch."
     exit 1
 fi
 

@@ -7,7 +7,7 @@
 #     curl -L 'http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/31.1.0esr-candidates/build1/logs/release-mozilla-esr31-android-armv6_build-bm85-build1-build0.txt.gz' 2>/dev/null | gunzip | ./scrape_buildbot_logs_for_commands.sed > all_commands.sh
 
 1a\
-#!/bin/bash
+#!/bin/bash -xve
 /^ in dir /{
     s/^ in dir \(.*\)(timeout.*)/cd \1/
     p

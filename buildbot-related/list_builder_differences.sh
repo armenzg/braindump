@@ -60,7 +60,7 @@ then
     export PATH=$venv/bin:$PATH
     #pip install pyOpenSSL
     #pip install Twisted==10.1.0
-    pip install -r ~/repos/releng/braindump/buildbot-related/pre_buildbot_master_requirements.txt
+    pip install -r $bdump/buildbot-related/pre_buildbot_master_requirements.txt
     cd $bbot/master
     python setup.py install
 fi

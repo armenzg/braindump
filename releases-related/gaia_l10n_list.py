@@ -14,7 +14,7 @@ def main():
     args = parser.parse_args()
 
     locales = requests.get(args.all_locales_url).json()
-    for l in locales.iterkeys():
+    for l in sorted(locales.keys()):
         print "{}/{}".format(args.prefix, l)
 
 if __name__ == '__main__':

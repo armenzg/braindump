@@ -7,10 +7,16 @@ set -e
 # hg push line below.
 HG_USER="ffxbld <release@mozilla.com>"
 HG_HOST=hg.mozilla.org
+SSH_KEY="$PWD/ffxbld_rsa"
 repo=mozilla-release
 release_repo_path=releases/l10n/mozilla-release
 beta_repo_path=releases/l10n/mozilla-beta
 wd=`pwd`/l10n
+
+if ! test -e $SSH_KEY; then
+    echo "cannot access $SSH_KEY"
+    exit 1
+fi
 
 mkdir -p $wd
 cd $wd
@@ -41,7 +47,7 @@ for l in `wget -q -O- http://$HG_HOST/releases/$repo/raw-file/default/browser/lo
         hg -R $l commit -u "$HG_USER" -m "Merge from mozilla-beta. CLOSED TREE a=release" || ec=$? | tee -a merged_l10n_locales
         echo "Merge on locale '$l'; exit code '$ec'" >> merged_l10n_locales
     fi
-    hg -R $l push -f -e "ssh -l ffxbld -i ~/.ssh/ffxbld_dsa" ssh://$HG_HOST/$release_repo_path/$l
+    hg -R $l push -f -e "ssh -l ffxbld -i $SSH_KEY" ssh://$HG_HOST/$release_repo_path/$l
 done
 
 if test -r merged_l10n_locales; then

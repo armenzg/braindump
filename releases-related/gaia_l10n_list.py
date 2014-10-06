@@ -18,7 +18,7 @@ def main():
         prefix = prefix.rstrip("/") + "/"
 
     locales = requests.get(args.all_locales_url).json()
-    for l in sorted(e for e in locales.keys() if e != "en-US"):
+    for l in sorted(e for e in locales.keys()):
         print "{}{}".format(args.prefix, l)
 
 if __name__ == '__main__':

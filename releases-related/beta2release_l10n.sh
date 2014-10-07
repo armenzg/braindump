@@ -29,7 +29,8 @@ for l in `wget -q -O- http://$HG_HOST/releases/$repo/raw-file/default/browser/lo
     fi
     hg clone http://$HG_HOST/$release_repo_path/$l
     hg clone http://$HG_HOST/$beta_repo_path/$l $l.beta
-    release_rev=`hg -R $l id -i -r default`
+    # -r default doesn't work in empty repos
+    release_rev=`hg -R $l id -i`
     beta_rev=`hg -R $l.beta id -i -r default`
     if [ $release_rev == $beta_rev ] ; then
         echo "Same beta/release rev on $l; skipping"

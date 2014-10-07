@@ -23,11 +23,10 @@ for l in $(python gaia_l10n_list.py); do
         echo "can't find $g"
     fi
 
-    remotes_to_pull="$(grep remotes_to_pull "$h" | sed "s/\$/ ${v_under}/g")"
     path="${v_under} = ${prefix}/${v_under}/${l}"
     rename="renameremote${v_none}defaultbranchto = $v_dot"
     sed "s,\[mozilla.vcs-sync\],$path\n[mozilla.vcs-sync],g" $h > ${h}.tmp
-    echo $remotes_to_pull >> ${h}.tmp
+    sed -i "s,.*remotes_to_pull.*,\0 ${v_under},g" ${h}.tmp
     mv ${h}.tmp ${h}
     echo -e "\t$rename" >> $g
 done

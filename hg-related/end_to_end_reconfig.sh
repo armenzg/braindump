@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-# Update and tag the buildbot repos
-echo -n "Tagging started..."
+# Update and merge the buildbot repos
+echo -n "Merge started..."
 date
 #for d in mozharness buildbot-configs buildbotcustom tools; do
 for d in buildbot-configs buildbotcustom tools; do
@@ -44,7 +44,7 @@ echo "| `TZ=America/Los_Angeles date +"%Y-%m-%d %H:%M PT"`" >> reconfig_update_f
 echo '|' >> reconfig_update_for_maintenance.wiki
 grep summary *_preview_changes.txt | awk '{sub (/ r=.*$/,"");print substr($0, index($0,$2))}' | sed 's/[Bb]ug \([0-9]*\):* *-* */\* {{bug|\1}} - /' | sort -u >> reconfig_update_for_maintenance.wiki
 
-echo -n "Tagging finished..."
+echo -n "Merge finished..."
 date
 
 cd tools/buildfarm/maintenance

@@ -22,11 +22,13 @@ for l in $(python gaia_l10n_list.py); do
     if [ ! -e $g ]; then
         echo "can't find $g"
     fi
-
-    path="${v_under} = ${prefix}/${v_under}/${l}"
-    rename="renameremote${v_none}defaultbranchto = $v_dot"
-    sed "s,\[mozilla.vcs-sync\],$path\n[mozilla.vcs-sync],g" $h > ${h}.tmp
-    sed -i "s,.*remotes_to_pull.*,\0 ${v_under},g" ${h}.tmp
-    mv ${h}.tmp ${h}
-    echo -e "\t$rename" >> $g
+    if ! grep -q renameremote $g; then
+        echo $l
+    fi
+    #path="${v_under} = ${prefix}/${v_under}/${l}"
+    #rename="renameremote${v_none}defaultbranchto = $v_dot"
+    #sed "s,\[mozilla.vcs-sync\],$path\n[mozilla.vcs-sync],g" $h > ${h}.tmp
+    #sed -i "s,.*remotes_to_pull.*,\0 ${v_under},g" ${h}.tmp
+    #mv ${h}.tmp ${h}
+    #echo -e "\t$rename" >> $g
 done

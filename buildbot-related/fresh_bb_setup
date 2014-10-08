@@ -5,7 +5,7 @@ Create build, try, & test servers based on fresh checkouts under
 'dir_name'.
 
 Environment variables:
-    PY      name of python interpreter to use (defaults to python2.6)
+    PY      name of python interpreter to use (defaults to python2.7)
 "
 set -e
 
@@ -21,7 +21,7 @@ test $# -eq 1 || usage "wrong number of arguements"
 
 NAME=$1
 if [ -z "$PY" ] ; then
-    PY=python2.6
+    PY=python2.7
 fi
 echo Using \"$PY\" interpreter for python
 if [ -z "$REPO_PATH" ] ; then

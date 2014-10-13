@@ -7,13 +7,19 @@ set -e
 # hg push line below.
 HG_USER="ffxbld <release@mozilla.com>"
 HG_HOST=hg.mozilla.org
+SSH_KEY="$PWD/ffxbld_rsa"
 # IGNORE_LOCALES is here because these locales had zero checkins, and so no 'default' branch
 # We probably want to clear out this list, and add to it as we hit that issue; alternately we can get rid of it and allow for no default branch to just skip the locale.
-IGNORE_LOCALES="af zu"
-BRANCH=v2.0
-TO_REPO_PATH=releases/gaia-l10n/v2_0
+IGNORE_LOCALES=
+BRANCH=v2.1
+TO_REPO_PATH=releases/gaia-l10n/v2_1
 from_repo_path=gaia-l10n/
 wd=`pwd`/l10n
+
+if ! test -e $SSH_KEY; then
+    echo "cannot access $SSH_KEY"
+    exit 1
+fi
 
 mkdir -p $wd
 cd $wd
@@ -54,7 +60,7 @@ for l in `wget -q -O- https://raw.githubusercontent.com/mozilla-b2g/gaia/$BRANCH
         hg -R $l commit -u "$HG_USER" -m "Merge from gaia-l10n. CLOSED TREE a=release" || ec=$? | tee -a merged_l10n_locales
         echo "Merge on locale '$l'; exit code '$ec'" >> merged_l10n_locales
     fi
-    hg -R $l push -f -e "ssh -l ffxbld -i ~/.ssh/ffxbld_dsa" ssh://$HG_HOST/$TO_REPO_PATH/$l
+    hg -R $l push -f -e "ssh -l ffxbld -i $SSH_KEY" ssh://$HG_HOST/$TO_REPO_PATH/$l
 done
 
 if test -r merged_l10n_locales; then

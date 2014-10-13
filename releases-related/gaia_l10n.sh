@@ -24,7 +24,7 @@ fi
 mkdir -p $wd
 cd $wd
 
-for l in `wget -q -O- https://raw.githubusercontent.com/mozilla-b2g/gaia/$BRANCH/locales/languages_all.json | awk '{print $1}' | sed -e 's/[{}"]*//g'`; do
+for l in `wget --no-check-certificate -q -O- https://raw.githubusercontent.com/mozilla-b2g/gaia/$BRANCH/locales/languages_all.json | awk '{print $1}' | sed -e 's/[{}"]*//g'`; do
     count=`echo $IGNORE_LOCALES | grep -cw $l || true`  # End with 'true' so -e doesn't kill the script
     if [ $count -ge 1 ] ; then
         echo "Ignoring $l ..."

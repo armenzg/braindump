@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """
 Demo script for uploading a file to a bunch of build slaves
+Prerequisites: you need paramiko and requests in your python environment
 """
 import paramiko
-
+from requests.auth import HTTPBasicAuth
 
 class Server(object):
     """
@@ -37,12 +38,15 @@ if __name__ == '__main__':
     import requests
 
     # Get a list of all the slaves from slavealloc
-    slaves = requests.get("http://slavealloc.build.mozilla.org/api/slaves").json()
+    # XXX: Update LDAP credentials below
+    slaves = requests.get('https://secure.pub.build.mozilla.org/slavealloc/api/slaves', auth=HTTPBasicAuth('<my-ldap-user@mozilla.com>', 'my-very-secret-password')).json()
     hosts = []
-    # Let's just use the windows ones
+    # Let's just use the Windows production builders
     for s in slaves:
-        if 'w64' in s['name'] and s['purpose'] == 'build':
+        if s['distro'] == 'win2k8' and s['environment'] == 'prod' and s['trustid'] == 5:
             hosts.append(s['name'])
+
+    print 'Uploading to hosts: %s' % hosts
 
     failed_hosts = []
 
@@ -50,7 +54,8 @@ if __name__ == '__main__':
         try:
             # XXX: Update the password below
             with Server("cltbld", "opensesame", "%s.build.mozilla.org" % h) as s:
-                s.upload("/path/to/local/file.txt", "/E$/builds/file.txt")
+                # XXX: Update the local file and remote file below
+                s.upload("/path/to/local/file.txt", "/C$/Users/cltbld/sample-file.txt")
                 print h, "OK"
         except Exception as e:
             print h, "FAILED"

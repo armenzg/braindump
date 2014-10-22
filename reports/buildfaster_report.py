@@ -345,7 +345,7 @@ _worksteps = [
         ('.*peptest', ['run_script']),
         ('.*marionette', ['run_script']),
         ('Android.*(?!talos)', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'run_script']),
-        ('(Linux|OS X|WINNT).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar', 'run_script', 'check']),
+        ('(Linux|OS X|WINNT|Win32).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar', 'run_script', 'check']),
         ('b2g', ['compile', 'make_pkg', 'run_script']),
         ('B2G', ['compile', 'make_pkg', 'run_script']),
         ('.*web-platform-tests.*', ['run_script']),

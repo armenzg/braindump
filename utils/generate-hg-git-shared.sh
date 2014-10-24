@@ -35,8 +35,40 @@ find repo -name clone.bundle -o -name '*.lock' -print -delete
 time tar cf git-shared-repo.tar repo/
 
 cd $HG_SHARE_BASE_DIR/mozilla-central/.hg
-time tar cf ../mozilla-central.tar .
+# central
+cat << EOF > hgrc
+[paths]
+default = https://hg.mozilla.org/mozilla-central
+EOF
+time tar cf ../../mozilla-central.tar .
+
+# try
+cat << EOF > hgrc
+[paths]
+default = https://hg.mozilla.org/try
+EOF
+time tar cf ../../try.tar .
+# inbound
+cat << EOF > hgrc
+[paths]
+default = https://hg.mozilla.org/integration/mozilla-inbound
+EOF
+time tar cf ../../mozilla-inbound.tar .
+
+# revert to central
+cat << EOF > hgrc
+[paths]
+default = https://hg.mozilla.org/mozilla-central
+EOF
+
 
 # upload $HG_SHARE_BASE_DIR/mozilla-central.tar and $WRK_DIR/git-shared/repo.tar
 time s3cmd put $HG_SHARE_BASE_DIR/mozilla-central.tar s3://mozilla-releng-tarballs/mozilla-central.tar
+s3cmd setacl --acl-public s3://mozilla-releng-tarballs/mozilla-central.tar
 time s3cmd put $WRK_DIR/git-shared/git-shared-repo.tar s3://mozilla-releng-tarballs/git-shared-repo.tar
+s3cmd setacl --acl-public s3://mozilla-releng-tarballs/git-shared-repo.tar
+
+time s3cmd put $HG_SHARE_BASE_DIR/mozilla-inbound.tar s3://mozilla-releng-tarballs/mozilla-inbound.tar
+s3cmd setacl --acl-public s3://mozilla-releng-tarballs/mozilla-inbound.tar
+time s3cmd put $HG_SHARE_BASE_DIR/try.tar s3://mozilla-releng-tarballs/try.tar
+s3cmd setacl --acl-public s3://mozilla-releng-tarballs/try.tar

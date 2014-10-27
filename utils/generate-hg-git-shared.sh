@@ -48,12 +48,20 @@ cat << EOF > hgrc
 default = https://hg.mozilla.org/try
 EOF
 time tar cf ../../try.tar .
+
 # inbound
 cat << EOF > hgrc
 [paths]
 default = https://hg.mozilla.org/integration/mozilla-inbound
 EOF
 time tar cf ../../mozilla-inbound.tar .
+
+# inbound
+cat << EOF > hgrc
+[paths]
+default = https://hg.mozilla.org/integration/b2g-inbound
+EOF
+time tar cf ../../b2g-inbound.tar .
 
 # revert to central
 cat << EOF > hgrc
@@ -62,13 +70,12 @@ default = https://hg.mozilla.org/mozilla-central
 EOF
 
 
-# upload $HG_SHARE_BASE_DIR/mozilla-central.tar and $WRK_DIR/git-shared/repo.tar
-time s3cmd put $HG_SHARE_BASE_DIR/mozilla-central.tar s3://mozilla-releng-tarballs/mozilla-central.tar
-s3cmd setacl --acl-public s3://mozilla-releng-tarballs/mozilla-central.tar
-time s3cmd put $WRK_DIR/git-shared/git-shared-repo.tar s3://mozilla-releng-tarballs/git-shared-repo.tar
-s3cmd setacl --acl-public s3://mozilla-releng-tarballs/git-shared-repo.tar
+for bucket in mozilla-releng-tarballs-use1 mozilla-releng-tarballs-usw1 mozilla-releng-tarballs-usw2; do
+    for tarball in mozilla-central.tar mozilla-inbound.tar try.tar b2g-inbound.tar; do
+        time s3cmd put $HG_SHARE_BASE_DIR/$tarball s3://$bucket/$tarball
+        s3cmd setacl --acl-public s3://$bucket/$tarball
+    done
 
-time s3cmd put $HG_SHARE_BASE_DIR/mozilla-inbound.tar s3://mozilla-releng-tarballs/mozilla-inbound.tar
-s3cmd setacl --acl-public s3://mozilla-releng-tarballs/mozilla-inbound.tar
-time s3cmd put $HG_SHARE_BASE_DIR/try.tar s3://mozilla-releng-tarballs/try.tar
-s3cmd setacl --acl-public s3://mozilla-releng-tarballs/try.tar
+    time s3cmd put $WRK_DIR/git-shared/git-shared-repo.tar s3://$bucket/git-shared-repo.tar
+    s3cmd setacl --acl-public s3://$bucket/git-shared-repo.tar
+done

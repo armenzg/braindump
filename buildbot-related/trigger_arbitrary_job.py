@@ -73,6 +73,9 @@ if 400 <= int(r.status_code) < 500:
     args.user = raw_input("LDAP username: ")
     r = make_request()
 
-print "You return code is: %s" % r.status_code
-print "See your running jobs in here:"
-print "https://secure.pub.build.mozilla.org/buildapi/revision/%s/%s" % (branch, revision)
+if r.status_code == 202:
+    print "You return code is: %s" % r.status_code
+    print "See your running jobs in here:"
+    print "https://secure.pub.build.mozilla.org/buildapi/revision/%s/%s" % (branch, revision)
+else:
+    print "Something has gone wrong. We got status code: %s" % r.status_code

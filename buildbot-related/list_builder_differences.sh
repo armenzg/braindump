@@ -17,6 +17,13 @@ then
     exit 1
 fi
 
+if [ ! -f $patch_to_test ];
+then
+    echo "We can't reach the file you specified: $patch_to_test"
+    echo "Please make sure that it is an absolute path"
+    exit 1
+fi
+
 if [ -z "$workdir" ];
 then
     workdir="$HOME/.mozilla/releng"

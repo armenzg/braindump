@@ -1,6 +1,6 @@
 [{
     "enabled": true,
-    "environment": "staging",
+    "environment": "production",
     "hostname": "localhost",
     "http_port": 8010,
     "name": "build_master",
@@ -10,7 +10,7 @@
 },
 {
     "enabled": true,
-    "environment": "staging",
+    "environment": "production",
     "hostname": "localhost",
     "http_port": 8011,
     "name": "try_master",
@@ -20,7 +20,7 @@
 },
 {
     "enabled": true,
-    "environment": "staging",
+    "environment": "production",
     "hostname": "localhost",
     "http_port": 8012,
     "name": "test_master",

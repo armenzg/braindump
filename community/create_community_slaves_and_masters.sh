@@ -66,10 +66,8 @@ do
     if [ ! -d "$dir" ]; then mkdir "$dir"; fi
 done
 
-if [ ! -d "$venv" ];
-then
-    "$script_dir/setup_buildbot_environment.sh" -w "$workdir"
-fi
+# It creates the buildbot environment and updates the repositories
+"$script_dir/setup_buildbot_environment.sh" -w "$workdir"
 
 # Load up virtual environment
 /bin/bash -c ". $venv/bin/activate"

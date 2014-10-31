@@ -1,0 +1,30 @@
+[{
+    "enabled": true,
+    "environment": "staging",
+    "hostname": "localhost",
+    "http_port": 8010,
+    "name": "build_master",
+    "pb_port": 9010,
+    "role": "build",
+    "ssh_port": 7010
+},
+{
+    "enabled": true,
+    "environment": "staging",
+    "hostname": "localhost",
+    "http_port": 8011,
+    "name": "try_master",
+    "pb_port": 9011,
+    "role": "try",
+    "ssh_port": 7011
+},
+{
+    "enabled": true,
+    "environment": "staging",
+    "hostname": "localhost",
+    "http_port": 8012,
+    "name": "test_master",
+    "pb_port": 9012,
+    "role": "tests",
+    "ssh_port": 7012
+}]

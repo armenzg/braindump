@@ -91,9 +91,11 @@ declare -A slaves=(
 # NOTE: This is prone to use slaves that will not exist in the future
 for slave_type in ${role[@]}
 do
-    if [ ! -d ${slaves_dir}/${slave_type} ]; then
-        buildslave create-slave "$slaves_dir"/${slave_type} \
-            localhost:${slave["${slave_type}"]} ${slaves["${slave_type}_slave"]} pass > /dev/null
+    slave_dir=${slaves_dir}/${slave_type}
+    if [ ! -d $slave_dir ]; then
+        port=${slaves["${slave_type}"]}
+        name=${slaves["${slave_type}_slave"]}
+        buildslave create-slave $slave_dir localhost:$port $name pass > /dev/null
     fi
 done
 

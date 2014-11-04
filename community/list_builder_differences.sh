@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 # Author:   Armen Zambrano Gasparnian
 # Purpose:  It lists the list of builders that get added/removed after
 #           a buildbot-configs patch
@@ -6,11 +6,9 @@
 
 # This determines the directory where the script lives
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cwd=`pwd`
-log=$cwd/log_file.txt
-with_patch=$cwd/allthethings_with_patch.json
-without_patch=$cwd/allthethings_without_patch.json
-differences_path=$cwd/differences.txt
+with_patch=`pwd`/allthethings_with_patch.json
+without_patch=`pwd`/allthethings_without_patch.json
+differences_path=`pwd`/differences.txt
 
 while getopts j:w:fh opts; do
    case ${opts} in
@@ -44,23 +42,19 @@ then
     exit 1
 fi
 
-if [ ! -f $patch_to_test ]
+if [ ! -f "$patch_to_test" ]
 then
     echo "We can't reach the file you specified: $patch_to_test"
+    echo "Current directory is '$(pwd)'."
     echo "Please make sure that it is an absolute path"
     exit 1
-fi
-
-if [ -z "$workdir" ]
-then
-    workdir="$default_workdir"
 fi
 
 # Load common variables
 . "$script_dir/buildbot_config.sh" -w "$workdir"
 
 # Let's setup the buildbot environment and update it
-$script_dir/setup_buildbot_environment.sh -w $workdir -q
+"$script_dir/setup_buildbot_environment.sh" -w "$workdir" -q
 
 if test "$?" -ne 0 ; then
     echo "We have failed to setup the buildbot environment".
@@ -82,7 +76,7 @@ then
     # This step checks that the patch is actually good
     export VIRTUAL_ENV="1" # This is to remove an unneeded warning in test-masters.sh
     rm -rf test-output
-    $bco/test-masters.sh &> $log
+    $bco/test-masters.sh
     if test "$?" -ne 0 ; then
         echo "\nFAILED TESTS: test-masters.sh did not pass.\n"
         echo "Your patch does not pass the tests. See the masters that failed above and"
@@ -99,15 +93,17 @@ then
 fi
 
 # Create new list of builders
-rm -f $with_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $with_patch 
+rm -f $with_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $with_patch
 
 if [ -z $faster ] # We are *not* asking for a faster run 
 then
     # Create current list of builders
     hg up -C
-    rm -f $without_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $without_patch 
+    rm -f $without_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $without_patch
 fi
 
 rm -f $differences_path
-$bdu/buildbot-related/diff_allthethings.py $without_patch $with_patch > $differences_path 
-echo "Here's the file that contains your changes: $differences_path"
+$bdu/buildbot-related/diff_allthethings.py $without_patch $with_patch > $differences_path
+echo "\n"
+cat $differences_path
+echo -e "\\nHere's the file that contains your changes: $differences_path"

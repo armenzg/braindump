@@ -70,7 +70,7 @@ done
 "$script_dir/setup_buildbot_environment.sh" -w "$workdir"
 
 # Load up virtual environment
-/bin/bash -c ". $venv/bin/activate"
+source "$venv/bin/activate"
 
 for master_name in ${role[@]}
 do
@@ -82,7 +82,7 @@ do
     fi
 done
 
-declare -A slaves=( 
+declare -A slaves=(
  ["build"]="9010" ["build_slave"]="bld-linux64-ec2-001" \
  ["try"]="9011" ["try_slave"]="b-linux64-001" \
  ["test"]="9012" ["test_slave"]="tst-linux64-ec2-001" \

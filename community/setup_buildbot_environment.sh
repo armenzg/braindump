@@ -8,7 +8,7 @@
 while getopts w:qh opts; do
    case ${opts} in
       w) workdir=${OPTARG} ;;
-      q) quiet=1 ;;
+      q) verbosity="-q" ;;
       h) help=1 ;;
    esac
 done
@@ -41,24 +41,27 @@ for repo in $bco,$bco_b $bcu,$bcu_b $bdu,$bdu_b $bbo,$bbo_b $tools,$tools_b
 do
     cd $repos_dir
     set $repo
-    if [ ! -d "$1" ]
+    repo_path=$1
+    repo_name=`basename $repo_path`
+    branch=$2
+    if [ ! -d "$repo_path" ]
     then
-        repo_name=`basename $1`
-        hg clone -q http://hg.mozilla.org/build/$repo_name || exit
+        hg clone $verbosity http://hg.mozilla.org/build/$repo_name || exit
     fi
     # Let's update to the right branch
-    cd $1
-    hg up -C -q
-    hg pull -q -u
-    hg up -q -r $2
-    if [ ! -z quiet ]; then echo "Repo info: $1 updated to `hg id`"; fi
+    cd $repo_path
+    hg up -C $verbosity
+    hg pull $verbosity
+    hg up -r $branch $verbosity
+    hg status -u -0 | xargs -0 rm #Remove untracked files
+    if [ ! -z $verbosity ]; then echo "Repo info: $repo_path updated to `hg id`"; fi
 done
 IFS=$OLDIFS
 
 if [ ! -d "$venv" ]
 then
     virtualenv --no-site-packages "$venv" || exit
-    /bin/bash -c ". $venv/bin/activate"
+    source ". $venv/bin/activate"
     pip install -r "$bdu/community/pre_buildbot_requirements.txt"
     # Install buildbot
     cd "$bbo/master"
@@ -66,12 +69,12 @@ then
     # Install buildslave
     pip install buildbot-slave==0.8.4-pre-moz2 \
         --find-links http://pypi.pub.build.mozilla.org/pub || exit
-    # This is so we can reach buildbotcustom and tools when activating the venv 
+    # This is so we can reach buildbotcustom and tools when activating the venv
     echo "$repos_dir" >> "$venv"/lib/python2.7/site-packages/releng.pth
     echo "$tools/lib/python" >> "$venv"/lib/python2.7/site-packages/releng.pth
 fi
 
-if [ ! -z quiet ]
+if [ ! -z $verbosity ]
 then
     echo ""
     echo ""

@@ -14,6 +14,7 @@ DEVICES="dolphin emulator emulator-jb emulator-kk flame flame-kk hamachi helix n
 
 # Clone mozilla-central
 python $HGTOOL https://hg.mozilla.org/mozilla-central mozilla-central
+python $HGTOOL https://hg.mozilla.org/integration/gaia-central gaia-central
 
 # Clone B2G
 python $GITTOOL https://git.mozilla.org/b2g/B2G.git B2G
@@ -29,10 +30,10 @@ for device in $DEVICES; do
     time ./config.sh -q $device ../mozilla-central/b2g/config/$device/sources.xml < /dev/null
 done
 
-cd $REPO_DIR/..
-rm -rfv repo/manifest*
-find repo -name clone.bundle -o -name '*.lock' -print -delete
-time tar cf git-shared-repo.tar repo/
+cd $REPO_DIR
+rm -rfv manifest*
+find . -name clone.bundle -o -name '*.lock' -print -delete
+time tar cf ../git-shared-repo.tar .
 
 cd $HG_SHARE_BASE_DIR/mozilla-central/.hg
 # central
@@ -69,9 +70,11 @@ cat << EOF > hgrc
 default = https://hg.mozilla.org/mozilla-central
 EOF
 
+cd $HG_SHARE_BASE_DIR/gaia-central/.hg
+time tar cf ../../gaia-central.tar .
 
 for bucket in mozilla-releng-tarballs-use1 mozilla-releng-tarballs-usw1 mozilla-releng-tarballs-usw2; do
-    for tarball in mozilla-central.tar mozilla-inbound.tar try.tar b2g-inbound.tar; do
+    for tarball in gaia-central.tar mozilla-central.tar mozilla-inbound.tar try.tar b2g-inbound.tar; do
         time s3cmd put $HG_SHARE_BASE_DIR/$tarball s3://$bucket/$tarball
         s3cmd setacl --acl-public s3://$bucket/$tarball
     done

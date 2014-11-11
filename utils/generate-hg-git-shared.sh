@@ -70,10 +70,10 @@ cat << EOF > hgrc
 default = https://hg.mozilla.org/mozilla-central
 EOF
 
-cd $HG_SHARE_BASE_DIR/gaia-central/.hg
+cd $HG_SHARE_BASE_DIR/integration/gaia-central/.hg
 time tar cf ../../../gaia-central.tar .
 
-for bucket in mozilla-releng-tarballs-use1 mozilla-releng-tarballs-usw1 mozilla-releng-tarballs-usw2; do
+for bucket in mozilla-releng-tarballs-use1 mozilla-releng-tarballs-usw2; do
     for tarball in gaia-central.tar mozilla-central.tar mozilla-inbound.tar try.tar b2g-inbound.tar; do
         time s3cmd --acl-public put $HG_SHARE_BASE_DIR/$tarball s3://$bucket/$tarball
     done

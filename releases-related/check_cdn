@@ -1,0 +1,47 @@
+#!/bin/bash
+
+USAGE="usage: ${0##*/} [product/url]
+Compare original to cdn copies of URL
+
+where:
+    product/url is the url path starting with product (firefox or
+                thunderbird)
+
+options:
+    -h|--help   show help"
+
+cdn_base_urls=(
+    # first is authoritative master
+    http://ftp.mozilla.org/pub
+    http://wildcard.cdn.mozilla.net.edgesuite.net/pub
+    http://cds.d6b5y3z2.hwcdn.net/pub
+    http://wpc.1237.edgecastcdn.net/pub
+)
+
+warn() { for m; do echo "$m" ; done 1>&2 ; }
+die() { warn "$@"; exit 1; }
+usage() { warn "$@" "${USAGE:-}"; test $# -eq 0; exit $? ; }
+
+while test $# -gt 0; do
+    case "$1" in
+    -h|--help) usage ;;
+    -*) usage "Unknown option '$1'" ;;
+    *) break ;;
+    esac
+    shift 1
+done
+
+test $# -le 1 || usage "Wrong # arguments: '$#'"
+
+# leave a dummy value in there
+product="${1:-thunderbird/releases/34.0b1/update/linux-x86_64/zh-TW/thunderbird-33.0b1-34.0b1.partial.mar}"
+
+
+for url in ${cdn_base_urls[*]}; do
+    echo $url/$product
+    # content length and last modified should be the same on all hosts
+    # (etag is modified on hwcdn.net)
+    curl -o /dev/null -vILH 'Host: download.cdn.mozilla.net' \
+        $url/$product 2>&1 | egrep -i '^< (content-length|last-modified):'
+done
+exit $?

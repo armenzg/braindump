@@ -13,8 +13,11 @@ options:
 cdn_base_urls=(
     # first is authoritative master
     http://ftp.mozilla.org/pub
+    # edgesuite.net is akami
     http://wildcard.cdn.mozilla.net.edgesuite.net/pub
+    # high winds
     http://cds.d6b5y3z2.hwcdn.net/pub
+    # edge cast
     http://wpc.1237.edgecastcdn.net/pub
 )
 

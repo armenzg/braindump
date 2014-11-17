@@ -62,7 +62,7 @@ for url in ${cdn_base_urls[*]}; do
     echo $url/$product
     # content length and last modified should be the same on all hosts
     # (etag is modified on hwcdn.net)
-    curl -o /dev/null -vILH 'Host: download.cdn.mozilla.net' \
-        $url/$product 2>&1 | egrep -i '^< (content-length|last-modified):'
+    curl -o /dev/null -r 0-7 -viLH 'Host: download.cdn.mozilla.net' \
+        $url/$product 2>&1 | egrep -i '^< (content-(length|range)|last-modified):'
 done
 exit $?

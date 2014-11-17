@@ -10,11 +10,29 @@ where:
 options:
     -h|--help   show help"
 
+# best source of CDNs is table at:
+#   https://nagios.mozilla.org/sentry/
+# then weed out the internal and not-used-for-updaters (like cloudfront)
+#       $ curl -X GET -iL https://d2w2s2wlgxgbf6.cloudfront.net/pub/thunderbird/releases/34.0b1/update/linux-x86_64/zh-TW/thunderbird-33.0b1-34.0b1.partial.mar
+#       HTTP/1.1 403 Forbidden
+#       Content-Type: text/html
+#       Content-Length: 52
+#       Connection: keep-alive
+#       Cache-Control: max-age=600
+#       Date: Mon, 17 Nov 2014 20:40:03 GMT
+#       Age: 340
+#       X-Cache: Error from cloudfront
+#       Via: 1.1 d516d46cbba2b0e65ff660966e025465.cloudfront.net (CloudFront)
+#       X-Amz-Cf-Id: pEUK4x8rtr9VN2TdgNTC9BH3FKdyqg7Q3QhrSxHAnMHIIB4Tqd1zrg==
+#
+#       This property is not for updaters, only installers.
+
 cdn_base_urls=(
     # first is authoritative master
     http://ftp.mozilla.org/pub
-    # edgesuite.net is akami
+    # edgesuite.net is akami - 2 diff urls? who knows
     http://wildcard.cdn.mozilla.net.edgesuite.net/pub
+    http://download-akamai.cdn.mozilla.net/pub
     # high winds
     http://cds.d6b5y3z2.hwcdn.net/pub
     # edge cast

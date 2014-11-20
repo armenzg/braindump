@@ -44,7 +44,7 @@ file fennec-$version.multi.android-arm.apk | grep 'Zip archive'
 armv6_filename=fennec-$version.multi.android-arm-armv6.apk
 curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android-armv6/multi/$armv6_filename
 filetype=$(file $armv6_filename)
-if echo $filetype|grep 'ASCII'  > /dev/null; then
+if echo $filetype|grep -E '(ASCII|HTML)'  > /dev/null; then
     # HTML page downloaded
     echo "Warning: armv6 version not available"
     rm $armv6_filename

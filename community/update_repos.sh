@@ -29,5 +29,5 @@ for repo in `find $repos_dir -maxdepth 1 -mindepth 1 -type d`
 do
     cd $repo
     hg pull -u || exit 1
-    echo "Repo info: $repo_path updated to `hg id`"
+    echo "Repo info: $repo updated to `hg id`"
 done

@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -e
 # Author:   Armen Zambrano Gasparnian
 # Purpose:  It lists the list of builders that get added/removed after
 #           a buildbot-configs patch
@@ -22,10 +22,12 @@ done
 if [ ! -z $help ];
 then
     echo "This script helps discover which builders get added/removed to"
-    echo "Release Engineering buildbot masters (aka jobs on tbpl.mozilla.org).\n"
-    echo "NOTE: This only works against patches from the buildbot-configs repo\n"
+    echo "Release Engineering buildbot masters (aka jobs on tbpl.mozilla.org)."
+    echo ""
+    echo "NOTE: This only works against patches from the buildbot-configs repo"
+    echo ""
     echo "Usage: ./list_builder_differences.sh -j /path/to/patch/to/test.diff"
-    echo "           [-f] [-w alternative_workdir]\n"
+    echo "           [-f] [-w alternative_workdir]"
     echo " -j Specifies the path to the patch you're trying to test."
     echo " -w This specifies where to setup your buildbot environment."
     echo "    buildbot_config.sh contains the default value if not specified."

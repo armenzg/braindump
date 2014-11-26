@@ -1,4 +1,3 @@
-#!/bin/bash
 # Author:   Armen Zambrano Gasparnian
 # Purpose:  This script does the following:
 #             - create a workdir
@@ -8,7 +7,7 @@
 while getopts w:qh opts; do
    case ${opts} in
       w) workdir=${OPTARG} ;;
-      q) verbosity="-q" ;;
+      q) quiet="-q" ;;
       h) help=1 ;;
    esac
 done
@@ -46,15 +45,19 @@ do
     branch=$2
     if [ ! -d "$repo_path" ]
     then
-        hg clone $verbosity http://hg.mozilla.org/build/$repo_name || exit
+        hg clone $quiet http://hg.mozilla.org/build/$repo_name || exit
     fi
     # Let's update to the right branch
     cd $repo_path
-    hg up -C $verbosity
-    hg pull $verbosity
-    hg up -r $branch $verbosity
-    hg status -u -0 | xargs -0 rm #Remove untracked files
-    if [ ! -z $verbosity ]; then echo "Repo info: $repo_path updated to `hg id`"; fi
+    hg up -C $quiet
+    hg pull $quiet
+    hg up -r $branch $quiet
+    untracked_files=`hg status -u -0 | wc -l`
+    if [ ! $untracked_files -eq 0 ]
+    then
+        hg status -u -0 | xargs -0 rm #Remove untracked files
+    fi
+    if [ -z "$quiet" ]; then echo "Repo info: $repo_path updated to `hg id`"; fi
 done
 IFS=$OLDIFS
 
@@ -74,7 +77,7 @@ then
     echo "$tools/lib/python" >> "$venv"/lib/python2.7/site-packages/releng.pth
 fi
 
-if [ ! -z $verbosity ]
+if [ -z "$quiet" ]
 then
     echo ""
     echo ""

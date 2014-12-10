@@ -86,6 +86,7 @@ declare -A slaves=(
  ["build"]="9010" ["build_slave"]="bld-linux64-ec2-001" \
  ["try"]="9011" ["try_slave"]="b-linux64-hp-0001" \
  ["test"]="9012" ["test_slave"]="tst-linux64-ec2-001" \
+ ["talos"]="9012" ["test_slave"]="talos-linux64-ix-001" \
 )
 
 # NOTE: This is prone to use slaves that will not exist in the future

@@ -106,6 +106,16 @@ def read_exclude_file(file_name):
     return ids
 
 
+def is_id_excluded(key_id, excluded_ids):
+    if key_id in excluded_ids:
+        return True
+
+    for x in excluded_ids:
+        if key_id.endswith(x):
+            return True
+    return False
+
+
 def output_keys(keys, args):
     values = list(keys)
     values.sort()
@@ -155,7 +165,7 @@ def main():
             gpg_id = grab_id.match(l)
             if gpg_id:
                 this_id = gpg_id.groupdict()['gpg_id']
-                if args.ids_only and this_id not in exclude_ids:
+                if args.ids_only and not is_id_excluded(this_id, exclude_ids):
                     keys.add("-r 0x{0}".format(this_id))
             elif not args.ids_only:
                 add_user = True
@@ -175,7 +185,7 @@ def main():
                         keys.add(f)
                         break  # from all id's for this file
                 else:
-                    if this_id in exclude_ids:
+                    if is_id_excluded(this_id, exclude_ids):
                         this_user = "ALUMNI: %s" % this_user
                         add_user = add_alumni
                     if add_user:

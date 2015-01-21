@@ -1,0 +1,64 @@
+#!/bin/bash
+
+hostname=$1
+if [ "${hostname}" == "" ]; then
+    echo "Usage: `basename $0` <hostname>"
+    exit 1
+fi
+
+source ~/.reconfig/config
+
+if [ "${IPMI_USERNAME}" == "" ]; then
+   echo "IPMI_USERNAME not set. Exiting."
+   exit 2
+fi
+
+if [ "${IPMI_PASSWORD}" == "" ]; then
+   echo "IPMI_PASSWORD not set. Exiting."
+   exit 3
+fi
+
+netboot() {
+    local hostname=$1
+    domain=`host ${hostname} | grep 'has address' | cut -d' ' -f1 | cut -d'.' -f2-`
+
+    case "${domain}" in
+        "relabs.releng.scl3.mozilla.com") cmd="/usr/sbin/bless --netboot --server bsdp://10.26.52.17; reboot"
+                                          ;;
+        "srv.releng.scl3.mozilla.com")    cmd="/usr/sbin/bless --netboot --server bsdp://10.26.52.17; reboot"
+                                          ;;
+        "build.releng.scl3.mozilla.com")  cmd="/usr/sbin/bless --netboot --server bsdp://10.26.52.17; reboot"
+                                          ;;
+        "try.releng.scl3.mozilla.com")    cmd="/usr/sbin/bless --netboot --server bsdp://10.26.52.17; reboot"
+                                          ;;
+        "test.releng.scl3.mozilla.com")   cmd="/usr/sbin/bless --netboot --server bsdp://10.26.56.110; reboot"
+                                          ;;
+        "qa.scl3.mozilla.com")            cmd="/usr/sbin/bless --netboot --server bsdp://10.22.73.45; reboot"
+                                          ;;
+        *)                                echo "Unknown domain: ${domain}"
+                                          exit 1;;
+    esac
+
+    echo "Running ssh root@${hostname} \"${cmd}\""
+    ssh root@${hostname} "${cmd}"
+}
+
+pxeboot() {
+    local hostname=$1
+    cmd="ipmitool -U ${IPMI_USERNAME} -P ${IPMI_PASSWORD} -H ${hostname}-mgmt.build.mozilla.org chassis bootdev pxe;ipmitool -U ${IPMI_USERNAME} -P ${IPMI_PASSWORD} -H ${hostname}-mgmt.build.mozilla.org chassis power reset"
+    displaycmd="ipmitool -U ${IPMI_USERNAME} -P XXXXXXXX -H ${hostname}-mgmt.build.mozilla.org chassis bootdev pxe;ipmitool -U ${IPMI_USERNAME} -P XXXXXXXX -H ${hostname}-mgmt.build.mozilla.org chassis power reset"
+    echo "Running ssh buildduty@cruncher.build.mozilla.org \"${displaycmd}\""
+    ssh buildduty@cruncher.build.mozilla.org "${cmd}"
+}
+
+hostname=$1
+case "${hostname}" in
+    *lion* | *snow* | *yosemite* ) netboot ${hostname}
+				   ;;
+    *2008-ix* | *w732* | *xp32* | *w864* | *ix-mn-w0864* ) pxeboot ${hostname}
+					  ;;
+    *) echo "Don't know how to re-image ${hostname}."
+       exit 1
+esac
+
+exit 0

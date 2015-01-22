@@ -10,7 +10,7 @@ HGTOOL=$TOOLS_DIR/buildfarm/utils/hgtool.py
 REPO_DIR=$WRK_DIR/git-shared/repo
 export HG_SHARE_BASE_DIR=$WRK_DIR/hg-shared
 
-DEVICES="dolphin emulator emulator-jb emulator-kk flame flame-kk hamachi helix nexus-4 wasabi"
+DEVICES="dolphin dolphin-512 emulator emulator-jb emulator-kk flame flame-kk hamachi helix nexus-4 wasabi"
 
 # Clone mozilla-central
 python $HGTOOL https://hg.mozilla.org/mozilla-central mozilla-central

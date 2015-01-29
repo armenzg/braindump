@@ -39,8 +39,6 @@ def get_failed_details(tbpl_comments):
         for key, val in categories.iteritems():
             match = re.search(val, str(text))
             if match:
-                if match.groups()[-1] == None:
-                    x = 5
                 failed_job[key] = match.groups()[-1]
         failed_jobs.append(failed_job)
 
@@ -94,7 +92,6 @@ if __name__ == "__main__":
         'slave_counts': get_counts(failed_jobs, 'slave'),
         'builder_counts': get_counts(failed_jobs, 'builder'),
         'repo_counts': get_counts(failed_jobs, 'repo'),
-        'revision_counts': get_counts(failed_jobs, 'revision'),
         'time_counts': get_times(failed_jobs),
     }
 

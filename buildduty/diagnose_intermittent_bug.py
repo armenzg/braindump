@@ -2,6 +2,7 @@
 
 import optparse
 import sys
+import operator
 import re
 import datetime
 
@@ -52,7 +53,8 @@ def get_counts(failed_jobs, category):
     for val in unique_vals:
         counts[val] = sum(1 for job in failed_jobs if job.get(category) == val)
 
-    return counts
+    # sort the dict by values by converting it to a list of tuples and order from high -> low
+    return sorted(counts.items(), key=operator.itemgetter(1))[::-1]
 
 
 def get_times(failed_jobs):
@@ -89,10 +91,10 @@ if __name__ == "__main__":
     failed_jobs = get_failed_details(tbpl_comments)
 
     totals = {
-        'slave_counts': get_counts(failed_jobs, 'slave'),
-        'builder_counts': get_counts(failed_jobs, 'builder'),
-        'repo_counts': get_counts(failed_jobs, 'repo'),
-        'time_counts': get_times(failed_jobs),
+        'slaves': get_counts(failed_jobs, 'slave'),
+        'builders': get_counts(failed_jobs, 'builder'),
+        'repos': get_counts(failed_jobs, 'repo'),
+        'times': get_times(failed_jobs),
     }
 
     pprint(totals)

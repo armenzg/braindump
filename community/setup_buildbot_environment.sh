@@ -64,14 +64,15 @@ IFS=$OLDIFS
 if [ ! -d "$venv" ]
 then
     virtualenv --no-site-packages "$venv" || exit
-    source ". $venv/bin/activate"
-    pip install -r "$bdu/community/pre_buildbot_requirements.txt"
+    $venv/bin/pip install -r "$bdu/community/pre_buildbot_requirements.txt"
     # Install buildbot
     cd "$bbo/master"
-    python setup.py install || exit
+    $venv/bin/python setup.py install || exit
     # Install buildslave
-    pip install buildbot-slave==0.8.4-pre-moz2 \
+    $venv/bin/pip install buildbot-slave==0.8.4-pre-moz2 \
         --find-links http://pypi.pub.build.mozilla.org/pub || exit
+    # XXX: If running in Mac we need to also install OpenSSL==0.13
+    #      Adding it to pre_buildbot_requirements breaks it for Linux
     # This is so we can reach buildbotcustom and tools when activating the venv
     echo "$repos_dir" >> "$venv"/lib/python2.7/site-packages/releng.pth
     echo "$tools/lib/python" >> "$venv"/lib/python2.7/site-packages/releng.pth

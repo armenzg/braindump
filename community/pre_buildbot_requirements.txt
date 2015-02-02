@@ -1,6 +1,5 @@
 Jinja2==2.7.3
 MarkupSafe==0.23
-OpenSSL==0.13
 Twisted==10.2.0
 argparse==1.2.1
 cffi==0.8.6

@@ -71,8 +71,7 @@ then
     # Install buildslave
     $venv/bin/pip install buildbot-slave==0.8.4-pre-moz2 \
         --find-links http://pypi.pub.build.mozilla.org/pub || exit
-    # XXX: If running in Mac we need to also install OpenSSL==0.13
-    #      Adding it to pre_buildbot_requirements breaks it for Linux
+    # XXX: It's been reported that OpenSSL==0.13 is needed in some cases
     # This is so we can reach buildbotcustom and tools when activating the venv
     echo "$repos_dir" >> "$venv"/lib/python2.7/site-packages/releng.pth
     echo "$tools/lib/python" >> "$venv"/lib/python2.7/site-packages/releng.pth

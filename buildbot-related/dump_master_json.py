@@ -58,6 +58,8 @@ def getMasterInfo(c):
             'downstream': sorted(s.builderNames),
             #'properties': dict((k, v) for (k, v, s) in s.properties.asList()),
         }
+        if hasattr(s, 'change_filter') and s.name.startswith('tests-'):
+            schedulers[s.name]['triggered_by'] = [lst for (lst, re, fn, attr) in s.change_filter.checks if attr == "branch"][0]
 
     retval = {
         'builders': builders,

@@ -10,12 +10,14 @@ with_patch=`pwd`/allthethings_with_patch.json
 without_patch=`pwd`/allthethings_without_patch.json
 differences_path=`pwd`/differences.txt
 
-while getopts j:w:fh opts; do
+while getopts cj:w:fhp opts; do
    case ${opts} in
+      c) clobber="-c" ;;
       j) patch_to_test=${OPTARG} ;;
       w) workdir=${OPTARG} ;;
       f) faster=1 ;;
       h) help=1 ;;
+      p) production=1 ;;
    esac
 done
 
@@ -56,17 +58,23 @@ fi
 . "$script_dir/buildbot_config.sh" -w "$workdir"
 
 # Let's setup the buildbot environment and update it
-"$script_dir/setup_buildbot_environment.sh" -w "$workdir" -q
+"$script_dir/setup_buildbot_environment.sh" -w "$workdir" -q $clobber
 
 if test "$?" -ne 0 ; then
     echo "We have failed to setup the buildbot environment".
     exit 1
 fi
 
+# setup_buildbot_environment always updates us to the production branches
 # We write patches against the default branches
-# setup_buildbot_environment.sh updates it to the produciton branch
-cd $bco
-hg up -r default
+# If -p is not specified we use the default branch
+if [ ! -z $production ]
+then
+    cd $bco
+    hg up -r default
+    cd $bcu
+    hg up -r default
+fi
 
 # Activate the virtual environment
 /bin/bash -c ". $venv/bin/activate"
@@ -97,7 +105,7 @@ fi
 # Create new list of builders
 rm -f $with_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $with_patch
 
-if [ -z $faster ] # We are *not* asking for a faster run 
+if [ -z $faster ] # We are *not* asking for a faster run
 then
     # Create current list of builders
     hg up -C

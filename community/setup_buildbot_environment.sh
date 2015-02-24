@@ -4,8 +4,9 @@
 #             - check-out and update all required Buildbot Release Engineering repositories
 #             - create buildbot virtual environments
 #
-while getopts w:qh opts; do
+while getopts cw:qh opts; do
    case ${opts} in
+      c) clobber=1 ;;
       w) workdir=${OPTARG} ;;
       q) quiet="-q" ;;
       h) help=1 ;;
@@ -21,6 +22,12 @@ fi
 if [ -z "$workdir" ];
 then
     workdir="$HOME/.mozilla/releng"
+fi
+
+if [ ! -z "$clobber" ];
+then
+    echo "___CLOBBERING___ $workdir"
+    rm -rf $workdir
 fi
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

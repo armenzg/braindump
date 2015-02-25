@@ -15,7 +15,7 @@ warn() { for m; do echo "$m"; done 1>&2 ; }
 die() { warn "$@"; exit 1; }
 usage() { warn "$@" "${USAGE:-}" ; test $# -eq 0; exit $?; }
 
-test -n "${1:-}" || usage "Missing build nuber"
+test -n "${1:-}" || usage "Missing build number"
 
 trap "echo 'FAILED to download apks for $1'; exit 1" EXIT
 

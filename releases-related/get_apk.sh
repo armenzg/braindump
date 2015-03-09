@@ -40,18 +40,6 @@ version="$1"
 echo "Downloading arm7 for $version build $build"
 curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android/multi/fennec-$version.multi.android-arm.apk
 file fennec-$version.multi.android-arm.apk | grep 'Zip archive'
-
-armv6_filename=fennec-$version.multi.android-arm-armv6.apk
-curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android-armv6/multi/$armv6_filename
-filetype=$(file $armv6_filename)
-if echo $filetype|grep -E '(ASCII|HTML)'  > /dev/null; then
-    # HTML page downloaded
-    echo "Warning: armv6 version not available"
-    rm $armv6_filename
-else
-    echo $filetype|grep 'Zip archive'
-fi
-
 echo "Downloading x86 for $version build $build"
 curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android-x86/multi/fennec-$version.multi.android-i386.apk
 file fennec-$version.multi.android-i386.apk | grep 'Zip archive'

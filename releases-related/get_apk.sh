@@ -56,7 +56,7 @@ echo "Downloading x86 for $version build $build"
 curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android-x86/multi/fennec-$version.multi.android-i386.apk
 file fennec-$version.multi.android-i386.apk | grep 'Zip archive'
 echo "Downloading arm7 for TStore $version"
-curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build1/android/ko/fennec-$version.ko.android-arm.apk
+curl -sSO https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android/ko/fennec-$version.ko.android-arm.apk
 file fennec-$version.ko.android-arm.apk | grep 'Zip archive'
 trap "" EXIT
 echo "Success! All three apks downloaded and appear to be Zip archives"

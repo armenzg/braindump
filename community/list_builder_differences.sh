@@ -10,7 +10,7 @@ with_patch=`pwd`/allthethings_with_patch.json
 without_patch=`pwd`/allthethings_without_patch.json
 differences_path=`pwd`/differences.txt
 
-while getopts cj:w:fhp opts; do
+while getopts cj:w:fhpt: opts; do
    case ${opts} in
       c) clobber="-c" ;;
       j) patch_to_test=${OPTARG} ;;
@@ -18,6 +18,8 @@ while getopts cj:w:fhp opts; do
       f) faster=1 ;;
       h) help=1 ;;
       p) production=1 ;;
+      # In case you need a tools patch to make your buildbot-config patch work
+      t) tools_patch=${OPTARG} ;;
    esac
 done
 
@@ -68,7 +70,7 @@ fi
 # setup_buildbot_environment always updates us to the production branches
 # We write patches against the default branches
 # If -p is not specified we use the default branch
-if [ ! -z $production ]
+if [ -z $production ]
 then
     cd $bco
     hg up -r default
@@ -76,9 +78,20 @@ then
     hg up -r default
 fi
 
+if [ ! -z $tools_patch ]
+then
+    echo "Patching ${tools}..."
+    cd $tools
+    patch -p1 < $tools_patch
+    # This is used to in dump_allthethings.sh to setup the various platforms on each
+    # master
+    export MASTERS_JSON_URL=$tools/buildfarm/maintenance/production-masters.json
+fi
+
 # Activate the virtual environment
 /bin/bash -c ". $venv/bin/activate"
 
+echo "Patching ${bco}..."
 cd $bco && patch -p1 < $patch_to_test || exit
 
 if [ -z $faster ] # We can skip the testing if we want
@@ -107,8 +120,11 @@ rm -f $with_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $with
 
 if [ -z $faster ] # We are *not* asking for a faster run
 then
+    cd $bco
     # Create current list of builders
     hg up -C
+    # We want to use a clean production-masters.json
+    unset MASTERS_JSON_URL
     rm -f $without_patch && cd $bco && $bdu/buildbot-related/dump_allthethings.sh $without_patch
 fi
 

@@ -85,7 +85,7 @@ then
     patch -p1 < $tools_patch
     # This is used to in dump_allthethings.sh to setup the various platforms on each
     # master
-    export MASTERS_JSON_URL=$tools/buildfarm/maintenance/production-masters.json
+    export MASTERS_JSON_URL=file://$tools/buildfarm/maintenance/production-masters.json
 fi
 
 # Activate the virtual environment
@@ -99,7 +99,7 @@ then
     # This step checks that the patch is actually good
     export VIRTUAL_ENV="1" # This is to remove an unneeded warning in test-masters.sh
     rm -rf test-output
-    $bco/test-masters.sh
+    $bco/test-masters.sh -e
     if test "$?" -ne 0 ; then
         echo "\nFAILED TESTS: test-masters.sh did not pass.\n"
         echo "Your patch does not pass the tests. See the masters that failed above and"

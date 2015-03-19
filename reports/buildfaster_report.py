@@ -1,6 +1,9 @@
 import json
 import sqlalchemy as sa
-import re, datetime, csv, urllib
+import re
+import datetime
+import csv
+import urllib
 import time
 import traceback
 import argparse
@@ -14,7 +17,7 @@ schedulerdb = sa.create_engine(scheduler_url, pool_recycle=60)
 status_url = "mysql://" + status_db_user + ":" + status_db_pass + "@" + status_db_host + "/" + status_db_name
 statusdb = sa.create_engine(status_url, pool_recycle=60)
 
-one_day  = 86400
+one_day = 86400
 two_days = one_day*2
 
 builds_sql = """SELECT
@@ -59,12 +62,13 @@ submittime_sql = """SELECT
 """
 worksteps_sql = """SELECT * FROM steps WHERE steps.build_id = :buildid"""
 
+
 class Cache(object):
 
     def __init__(self, hosts=[]):
         import memcache
         if not hosts:
-            hosts=['127.0.0.1:11211']
+            hosts = ['127.0.0.1:11211']
         self.m = memcache.Client(hosts)
 
     def _utf8(self, s):
@@ -85,7 +89,8 @@ class Cache(object):
     def delete(self, key):
         return self.m.delete(self._utf8(key))
 
-cache = Cache(hosts=['memcache1.releng.webapp.scl3.mozilla.com','memcache2.releng.webapp.scl3.mozilla.com'])
+cache = Cache(hosts=['memcache1.releng.webapp.scl3.mozilla.com', 'memcache2.releng.webapp.scl3.mozilla.com'])
+
 
 @sa.event.listens_for(sa.pool.Pool, "checkout")
 def check_connection(dbapi_con, con_record, con_proxy):
@@ -95,8 +100,7 @@ def check_connection(dbapi_con, con_record, con_proxy):
 
     cursor = dbapi_con.cursor()
     try:
-        cursor.execute("SELECT 1")  # could also be dbapi_con.ping(),
-                                    # not sure what is better
+        cursor.execute("SELECT 1")  # could also be dbapi_con.ping(), not sure what is better
     except sa.exc.OperationalError, ex:
         if ex.args[0] in (2006,   # MySQL server has gone away
                           2013,   # Lost connection to MySQL server during query
@@ -106,8 +110,10 @@ def check_connection(dbapi_con, con_record, con_proxy):
         else:
             raise
 
+
 def td2secs(td):
     return td.seconds + td.days * one_day
+
 
 def get_builds(branch, startdate, enddate):
     branchprefix = branch + "%"
@@ -119,6 +125,7 @@ def get_builds(branch, startdate, enddate):
                                  startdate=startdate,
                                  enddate=enddate
                                  ).fetchall()
+
 
 def get_props(buildrow):
     r_key = "buildfaster:props:%s" % buildrow.id
@@ -137,86 +144,83 @@ def get_props(buildrow):
     return retval
 
 _os_patterns = [
-        ('osx10.6', ['Rev3 MacOSX Snow Leopard', 'OS X 10.6.2']),
-        ('osx10.6-r4', ['Rev4 MacOSX Snow Leopard']),
-        ('osx10.7-r4', ['Rev4 MacOSX Lion']),
-        ('osx10.7', ['OS X 10.7', 'B2G macosx64_gecko', 'OS X Mulet']),
-        ('osx10.8', ['Rev5 MacOSX Mountain Lion 10.8','b2g_macosx64']),
-        ('osx10.9', ['Rev5 MacOSX Mavericks 10.9']),
-        ('osx10.5', ['Rev3 MacOSX Leopard', 'OS X 10.5.2']),
-        ('android_armv6', ['Android Armv6',
-                           'Android 2.2 Armv6']),
-        ('android_armv7', ['Android Tegra ',
-                           'Android 2.2 Tegra ']),
-        ('android_x86', ['Android x86',
-                         'Android 4.2 x86']),
-        ('android_4_x', ['Android 4.0']),
-        ('android_noion', ['Android no-ionmonkey',
-                           'Android 2.2 no-ionmonkey']),
-        ('android', ['Android']),
-        ('b2g_hamachi_dep', ['b2g_mozilla-central_hamachi_dep',
-                             'b2g_mozilla-central_hamachi_periodic',
-                             'b2g_mozilla-central_hamachi_eng_dep']),
-        ('b2g_helix_dep', ['b2g_mozilla-central_helix_dep',
-                           'b2g_mozilla-central_helix_periodic',
-                           'b2g_mozilla-central_helix_eng_periodic',
-                           'b2g_mozilla-central_helix_eng_dep']),
-        ('b2g_inari_dep', ['b2g_mozilla-central_inari_dep',
-                           'b2g_mozilla-central_inari_periodic',
-                           'b2g_mozilla-central_inari_eng_dep']),
-        ('b2g_leo_dep', ['b2g_mozilla-central_leo_dep',
-                         'b2g_mozilla-central_leo_periodic',
-                         'b2g_mozilla-central_leo_eng_periodic',
-                         'b2g_mozilla-central_leo_eng_dep']),
-        ('b2g_nexus-4_dep', ['b2g_mozilla-central_nexus-4_dep',
-                             'b2g_mozilla-central_nexus-4_periodic',
-                             'b2g_mozilla-central_nexus-4_eng_periodic',
-                             'b2g_mozilla-central_nexus-4_eng_dep']),
-        ('b2g_panda_dep', ['b2g_mozilla-central_panda_dep',
-                           'b2g_mozilla-central_panda_eng_dep']),
-        ('b2g_unagi_dep', ['b2g_mozilla-central_unagi_dep',
-                           'b2g_mozilla-central_unagi_eng_dep']),
-        ('b2g_dolphin', ['b2g_mozilla-central_dolphin']),
-        ('b2g_emulator', ['b2g_mozilla-central_emulator', 'b2g_emulator']),
-        ('b2g_linux32', ['b2g_mozilla-central_linux32_gecko',
-                         'b2g_mozilla-central_linux32_gecko_locali|zer']),
-        ('b2g_linux64', ['b2g_mozilla-central_linux64_gecko',
-                         'b2g_mozilla-central_linux64_gecko_localizer']),
-        ('b2g_osx', ['b2g_mozilla-central_macosx64_gecko',
-                     'b2g_mozilla-central_macosx64_gecko_localizer']),
-        ('b2g_hamachi', ['b2g_mozilla-central_hamachi_nightly',
-                         'b2g_mozilla-central_hamachi_eng_nightly']),
-        ('b2g_helix', ['b2g_mozilla-central_helix_nightly',
-                       'b2g_mozilla-central_helix_eng_nightly']),
-        ('b2g_inari', ['b2g_mozilla-central_inari_nightly',
-                       'b2g_mozilla-central_inari_eng_nightly']),
-        ('b2g_leo', ['b2g_mozilla-central_leo_nightly',
-                     'b2g_mozilla-central_leo_eng_nightly']),
-        ('b2g_nexus-4', ['b2g_mozilla-central_nexus-4_nightly',
-                         'b2g_mozilla-central_nexus-4_eng_nightly']),
-        ('b2g_panda', ['b2g_mozilla-central_panda_nightly',
-                       'b2g_mozilla-central_panda_eng_nightly']),
-        ('b2g_unagi', ['b2g_mozilla-central_unagi_nightly',
-                       'b2g_mozilla-central_unagi_eng_nightly']),
-        ('b2g_win32', ['b2g_mozilla-central_win32_gecko',
-                       'b2g_mozilla-central_win32_gecko_localizer']),
-        ('b2g_panda', ['b2g_panda']),
-        ('b2g_buri', ['b2g_mozilla-central_buri']),
-        ('b2g_wasabi', ['b2g_mozilla-central_wasabi']),
-        ('b2g_flame', ['b2g_mozilla-central_flame']),
-        ('linux64', ['Linux x86-64', 'linux64',
-                     'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64', 'Ubuntu ASAN VM 12.04 x64',
-                     'b2g_ubuntu64_vm']),
-        ('linux32', ['Linux',
-                     'Rev3 Fedora 12', 'fedora16-i386',
-                     'Ubuntu 12.04', 'Ubuntu VM 12.04', 'Ubuntu HW 12.04', 'Ubuntu ASAN VM 12.04',
-                     'b2g_ubuntu32_vm']),
-        ('win32', ['WINNT 5.2', 'Win32 Mulet']),
-        ('win64', ['WINNT 6.1 x86-64']),
-        ('win7', ['Rev3 WINNT 6.1', 'Windows 7 32-bit']),
-        ('winxp', ['Rev3 WINNT 5.1', 'Windows XP 32-bit']),
-        ('win8', ['WINNT 6.2']),
-        ]
+    ('osx10.6', ['Rev3 MacOSX Snow Leopard', 'OS X 10.6.2']),
+    ('osx10.6-r4', ['Rev4 MacOSX Snow Leopard']),
+    ('osx10.7-r4', ['Rev4 MacOSX Lion']),
+    ('osx10.7', ['OS X 10.7', 'B2G macosx64_gecko', 'OS X Mulet']),
+    ('osx10.8', ['Rev5 MacOSX Mountain Lion 10.8', 'b2g_macosx64']),
+    ('osx10.9', ['Rev5 MacOSX Mavericks 10.9']),
+    ('osx10.5', ['Rev3 MacOSX Leopard', 'OS X 10.5.2']),
+    ('android_armv6', ['Android Armv6',
+                       'Android 2.2 Armv6']),
+    ('android_armv7', ['Android Tegra ',
+                       'Android 2.2 Tegra ']),
+    ('android_x86', ['Android x86',
+                     'Android 4.2 x86']),
+    ('android_4_x', ['Android 4.0']),
+    ('android_noion', ['Android no-ionmonkey',
+                       'Android 2.2 no-ionmonkey']),
+    ('android', ['Android']),
+    ('b2g_hamachi_dep', ['b2g_mozilla-central_hamachi_dep',
+                         'b2g_mozilla-central_hamachi_periodic',
+                         'b2g_mozilla-central_hamachi_eng_dep']),
+    ('b2g_helix_dep', ['b2g_mozilla-central_helix_dep',
+                       'b2g_mozilla-central_helix_periodic',
+                       'b2g_mozilla-central_helix_eng_periodic',
+                       'b2g_mozilla-central_helix_eng_dep']),
+    ('b2g_inari_dep', ['b2g_mozilla-central_inari_dep',
+                       'b2g_mozilla-central_inari_periodic',
+                       'b2g_mozilla-central_inari_eng_dep']),
+    ('b2g_leo_dep', ['b2g_mozilla-central_leo_dep',
+                     'b2g_mozilla-central_leo_periodic',
+                     'b2g_mozilla-central_leo_eng_periodic',
+                     'b2g_mozilla-central_leo_eng_dep']),
+    ('b2g_nexus-4_dep', ['b2g_mozilla-central_nexus-4_dep',
+                         'b2g_mozilla-central_nexus-4_periodic',
+                         'b2g_mozilla-central_nexus-4_eng_periodic',
+                         'b2g_mozilla-central_nexus-4_eng_dep']),
+    ('b2g_panda_dep', ['b2g_mozilla-central_panda_dep',
+                       'b2g_mozilla-central_panda_eng_dep']),
+    ('b2g_unagi_dep', ['b2g_mozilla-central_unagi_dep',
+                       'b2g_mozilla-central_unagi_eng_dep']),
+    ('b2g_dolphin', ['b2g_mozilla-central_dolphin']),
+    ('b2g_emulator', ['b2g_mozilla-central_emulator', 'b2g_emulator']),
+    ('b2g_linux32', ['b2g_mozilla-central_linux32_gecko']),
+    ('b2g_linux64', ['b2g_mozilla-central_linux64_gecko']),
+    ('b2g_osx', ['b2g_mozilla-central_macosx64_gecko'])
+    ('b2g_hamachi', ['b2g_mozilla-central_hamachi_nightly',
+                     'b2g_mozilla-central_hamachi_eng_nightly']),
+    ('b2g_helix', ['b2g_mozilla-central_helix_nightly',
+                   'b2g_mozilla-central_helix_eng_nightly']),
+    ('b2g_inari', ['b2g_mozilla-central_inari_nightly',
+                   'b2g_mozilla-central_inari_eng_nightly']),
+    ('b2g_leo', ['b2g_mozilla-central_leo_nightly',
+                 'b2g_mozilla-central_leo_eng_nightly']),
+    ('b2g_nexus-4', ['b2g_mozilla-central_nexus-4_nightly',
+                     'b2g_mozilla-central_nexus-4_eng_nightly']),
+    ('b2g_panda', ['b2g_mozilla-central_panda_nightly',
+                   'b2g_mozilla-central_panda_eng_nightly']),
+    ('b2g_unagi', ['b2g_mozilla-central_unagi_nightly',
+                   'b2g_mozilla-central_unagi_eng_nightly']),
+    ('b2g_win32', ['b2g_mozilla-central_win32_gecko']),
+    ('b2g_panda', ['b2g_panda']),
+    ('b2g_buri', ['b2g_mozilla-central_buri']),
+    ('b2g_wasabi', ['b2g_mozilla-central_wasabi']),
+    ('b2g_flame', ['b2g_mozilla-central_flame']),
+    ('linux64', ['Linux x86-64', 'linux64',
+                 'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64', 'Ubuntu ASAN VM 12.04 x64',
+                 'b2g_ubuntu64_vm']),
+    ('linux32', ['Linux',
+                 'Rev3 Fedora 12', 'fedora16-i386',
+                 'Ubuntu 12.04', 'Ubuntu VM 12.04', 'Ubuntu HW 12.04', 'Ubuntu ASAN VM 12.04',
+                 'b2g_ubuntu32_vm']),
+    ('win32', ['WINNT 5.2', 'Win32 Mulet']),
+    ('win64', ['WINNT 6.1 x86-64']),
+    ('win7', ['Rev3 WINNT 6.1', 'Windows 7 32-bit']),
+    ('winxp', ['Rev3 WINNT 5.1', 'Windows XP 32-bit']),
+    ('win8', ['WINNT 6.2']),
+]
+
 
 def get_platform(buildername):
     for os, patterns in _os_patterns:
@@ -225,30 +229,32 @@ def get_platform(buildername):
                 return os
 
 _ignore_patterns = [
-        'l10n',
-        'hg bundle',
-        'xulrunner',
-        'blocklist update',
-        'periodic file update',
-        'valgrind',
-        'hsts',
-        'dxr',
-        'br-haz'
-        ]
+    'l10n',
+    'hg bundle',
+    'xulrunner',
+    'blocklist update',
+    'periodic file update',
+    'valgrind',
+    'hsts',
+    'dxr',
+    'br-haz'
+]
+
 
 def ignore_build(buildername):
     return any(p in buildername for p in _ignore_patterns)
 
 _jobtype_patterns = [
-        ('opt pgo test', ['.*pgo test.*']),
-        ('opt test', ['.*opt test.*']),
-        ('talos', ['.*talos.*']),
-        ('debug test', ['.*debug test.*']),
-        ('debug build', ['.*leak test build$', '.*br-haz.*', '.*leak test non-unified$']),
-        ('opt build', ['.*nightly$', '.*build$', '.*non-unified$']),
-        ('b2g test', ['b2g_ubuntu64_vm','B2G.*']),
-        ('b2g build', ['b2g.*','B2G.*']),
-        ]
+    ('opt pgo test', ['.*pgo test.*']),
+    ('opt test', ['.*opt test.*']),
+    ('talos', ['.*talos.*']),
+    ('debug test', ['.*debug test.*']),
+    ('debug build', ['.*leak test build$', '.*br-haz.*', '.*leak test non-unified$']),
+    ('opt build', ['.*nightly$', '.*build$', '.*non-unified$']),
+    ('b2g test', ['b2g_ubuntu64_vm', 'B2G.*']),
+    ('b2g build', ['b2g.*', 'B2G.*']),
+]
+
 
 def get_jobtype(buildername):
     for jobtype, patterns in _jobtype_patterns:
@@ -256,12 +262,14 @@ def get_jobtype(buildername):
             if re.match(pattern, buildername):
                 return jobtype
 
+
 def get_suitename(buildername):
     test_names = ['opt test', 'debug test', 'talos']
     if not any(t in buildername for t in test_names):
         return None
 
     return buildername.split()[-1]
+
 
 def get_submittime(schedulerdb, buildrow, props):
     r_key = "buildfaster:submittime:%s" % buildrow.id
@@ -301,8 +309,10 @@ def get_submittime(schedulerdb, buildrow, props):
         return None
     return datetime.datetime.utcfromtimestamp(retval)
 
+
 def get_revision(buildrow):
     return buildrow.revision
+
 
 def get_master_dbname(master_url):
     name = master_url[len("http://"):]
@@ -314,6 +324,7 @@ def get_master_dbname(master_url):
         if m['db_name'].startswith(name) and m['http_port'] == port:
             return m['db_name']
 
+
 def get_masterurl(claimed_by_name):
     for m in masters:
         if m['db_name'] == claimed_by_name:
@@ -322,34 +333,35 @@ def get_masterurl(claimed_by_name):
             return "http://%s:%s" % (hostname, port)
 
 _worksteps = [
-        ('.*jsreftest', ['jsreftest', 'run_script']),
-        ('.*reftest-no-accel', ['opengl-no-accel', 'reftest-no-d2d-d3d', 'run_script']),
-        ('.*reftest', ['reftest', 'run_script']),
-        ('.*reftest-ipc', ['reftest', 'run_script']),
-        ('.*crashtest', ['crashtest', 'run_script']),
-        ('.*xpcshell', ['xpcshell', 'run_script']),
-        ('.*jittest', ['run_script']),
-        ('.*cppunit', ['run_script']),
-        ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins', 'run_script']),
-        ('.*jetpack', ['jetpack', 'run_script', 'testpkgs', 'testaddons']),
-        ('.*mochitests-\d/\d', ['mochitest-plain-\d', 'run_script']),
-        ('.*mochitest-metro-chrome', ['mochitest-metro-chrome', 'run_script']),
-        ('.*mochitest-\d', ['mochitest-plain', 'run_script']),
-        ('.*mochitest-gl', ['mochitest-plain', 'run_script']),
-        ('.*mochitest-devtools-chrome', ['run_script']),
-        ('.*mochitest-e10s', ['run_script']),
-        ('.*robocop.*', ['mochitest-robocop', 'run_script']),
-        ('.*talos.*', ['Run performance tests', 'run_script']),
-        ('.*browser-chrome', ['mochitest-browser-chrome', 'run_script']),
-        ('.*remote-tdhtml', ['mochitest-browser-chrome', 'run_script']),
-        ('.*peptest', ['run_script']),
-        ('.*marionette', ['run_script']),
-        ('Android.*(?!talos)', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'run_script']),
-        ('(Linux|OS X|WINNT|Win32).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar', 'run_script', 'check']),
-        ('b2g', ['compile', 'make_pkg', 'run_script']),
-        ('B2G', ['compile', 'make_pkg', 'run_script']),
-        ('.*web-platform-tests.*', ['run_script']),
-        ]
+    ('.*jsreftest', ['jsreftest', 'run_script']),
+    ('.*reftest-no-accel', ['opengl-no-accel', 'reftest-no-d2d-d3d', 'run_script']),
+    ('.*reftest', ['reftest', 'run_script']),
+    ('.*reftest-ipc', ['reftest', 'run_script']),
+    ('.*crashtest', ['crashtest', 'run_script']),
+    ('.*xpcshell', ['xpcshell', 'run_script']),
+    ('.*jittest', ['run_script']),
+    ('.*cppunit', ['run_script']),
+    ('.*mochitest-other', ['mochitest-chrome', 'mochitest-browser-chrome', 'mochitest-a11y', 'mochitest-ipcplugins', 'run_script']),
+    ('.*jetpack', ['jetpack', 'run_script', 'testpkgs', 'testaddons']),
+    ('.*mochitests-\d/\d', ['mochitest-plain-\d', 'run_script']),
+    ('.*mochitest-metro-chrome', ['mochitest-metro-chrome', 'run_script']),
+    ('.*mochitest-\d', ['mochitest-plain', 'run_script']),
+    ('.*mochitest-gl', ['mochitest-plain', 'run_script']),
+    ('.*mochitest-devtools-chrome', ['run_script']),
+    ('.*mochitest-e10s', ['run_script']),
+    ('.*robocop.*', ['mochitest-robocop', 'run_script']),
+    ('.*talos.*', ['Run performance tests', 'run_script']),
+    ('.*browser-chrome', ['mochitest-browser-chrome', 'run_script']),
+    ('.*remote-tdhtml', ['mochitest-browser-chrome', 'run_script']),
+    ('.*peptest', ['run_script']),
+    ('.*marionette', ['run_script']),
+    ('Android.*(?!talos)', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'run_script']),
+    ('(Linux|OS X|WINNT|Win32).*', ['compile', 'make_buildsymbols', 'make_pkg_tests', 'make_pkg', 'make_complete_mar', 'run_script', 'check']),
+    ('b2g', ['compile', 'make_pkg', 'run_script']),
+    ('B2G', ['compile', 'make_pkg', 'run_script']),
+    ('.*web-platform-tests.*', ['run_script']),
+]
+
 
 def get_worktime(buildrow, props):
     r_key = "buildfaster:worktime:%s" % buildrow.id
@@ -427,7 +439,7 @@ if __name__ == "__main__":
     if args.verbose:
         logger.setLevel(logging.DEBUG)
         ch.setLevel(logging.DEBUG)
-    else :
+    else:
         logger.setLevel(logging.INFO)
         ch.setLevel(logging.INFO)
     logger.addHandler(ch)
@@ -440,7 +452,7 @@ if __name__ == "__main__":
     builds_q = sa.text(builds_sql)
     props_q = sa.text(props_sql)
     submittime_q = sa.text(submittime_sql)
-    worksteps_q =  sa.text(worksteps_sql)
+    worksteps_q = sa.text(worksteps_sql)
 
     masters = json.load(urllib.urlopen("https://hg.mozilla.org/build/tools/raw-file/default/buildfarm/maintenance/production-masters.json"))
 

@@ -22,5 +22,17 @@
     { "name": "Simone Bruno",
     "id": "A5A3CA96",
     "comment": "Left Mozilla"
+    },
+    { "name": "Pete Moore",
+    "id": "B98F981A",
+    "comment": "Left RelEng"
+    },
+    { "name": "Rail Aliev",
+    "id": "D9A8AD70",
+    "comment": "key revoked"
+    },
+    { "name": "Ben Hearsum",
+    "id": "CD882E88",
+    "comment": "key revoked"
     }
 ]

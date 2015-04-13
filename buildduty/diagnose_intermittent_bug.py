@@ -23,7 +23,7 @@ def get_source(bug):
 
 def get_tbpl_comments(soup):
     comments = soup.find_all(class_='bz_comment')
-    return [comment for comment in comments if 'TBPL Robot' in str(comment.find(class_='vcard'))]
+    return [comment for comment in comments if 'Treeherder Robot' in str(comment.find(class_='vcard'))]
 
 
 def get_failed_details(tbpl_comments):

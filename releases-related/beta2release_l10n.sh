@@ -11,7 +11,7 @@ where:
 and options are:
     -h | --help     show this text
     --user USER     hg commit & push as USER (default ffxbld or HG_USER)
-    --ssh_key KEY   ssh key for USER (default ffxbld_rsa or SSH_KEY)
+    --ssh-key KEY   ssh key for USER (default ffxbld_rsa or SSH_KEY)
     --no-merge      only check, do not merge
 "
 

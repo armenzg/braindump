@@ -10,16 +10,19 @@ where:
 
 and options are:
     -h | --help     show this text
-    --user USER     hg commit & push as USER (default ffxbld or HG_USER)
+    --user USER     hg commit as USER (default 'ffxbld <release@mozilla.com>' or HG_USER)
     --ssh-key KEY   ssh key for USER (default ffxbld_rsa or SSH_KEY)
+    --ssh-user LOGIN    ssh USER for login (default ffxbld or HG_SSH_USER)
     --no-merge      only check, do not merge
+    --mrproper      remove any state from prior run first
 "
 
 # if you choose to use your own credentials, you also have to change the
 # hg push line below.
-HG_USER="${HG_USER:-ffxbld <release@mozilla.com>}"
-HG_HOST=hg.mozilla.org
+HG_USER="${HG_USER:-ffxbld <release@mozilla.com>}"      # used for commit message
+HG_SSH_USER="${HG_SSH_USER:-ffxbld}"                    # used to push
 SSH_KEY="${SSH_KEY:-$PWD/ffxbld_rsa}"
+HG_HOST=hg.mozilla.org
 repo=mozilla-release
 release_repo_path=releases/l10n/mozilla-release
 beta_repo_path=releases/l10n/mozilla-beta
@@ -30,12 +33,15 @@ die() { warn "$@"; exit 1; }
 usage() { warn "$@" "${USAGE:-}" ; test $# -eq 0 ; exit $? ; }
 
 do_merge=true
+do_mrproper=false
 
 while test $# -gt 0 ; do
     case "$1" in
         --no-merge) do_merge=false ;;
         --user) HG_USER="$2" ; shift ;;
         --ssh-key) SSH_KEY="$2" ; shift ;;
+        --ssh-user) HG_SSH_USER="$2" ; shift ;;
+        --mrproper) do_mrproper=true ;;
         -h | --help) usage ;;
         -*) usage "Unknown option '$1'" ;;
         *) break ;;
@@ -50,6 +56,14 @@ elif test "$HG_USER" == "${HG_USER/@/}"; then
     usage "HG_USER must contain an '@' sign"
 fi
 
+if $do_mrproper ; then
+    if test -d $wd ; then
+        warn "Removing old state at user's request"
+        rm -rf $wd
+    else
+        warn "No old state to remove"
+    fi
+fi
 mkdir -p $wd
 cd $wd
 
@@ -71,16 +85,18 @@ fi
 
 
 echo "Checking ${#locales[@]} repositories"
+echo "$(date -u +%Y-%m-%dT%H:%M:%S%Z) Started run" >> merged_l10n_locales
 
 for l in ${locales[@]} ; do
     mr_id=$(hg id -r default http://$HG_HOST/$release_repo_path/$l)
     mb_id=$(hg id -r default http://$HG_HOST/$beta_repo_path/$l)
     if ! test "$mr_id" == "$mb_id" ; then
-        echo "$l needs merging" >> merged_l10n_locales
+        echo "$l needs checking" >> merged_l10n_locales
         if $do_merge ; then
             if test -d $l -a -d $l.beta; then
                 # allow re-running if script bombs out. Assumption is if both
                 # repos exist, locale has been dealt with.
+                warn "Found prior work for $l, not updating."
                 continue
             fi
             hg clone http://$HG_HOST/$release_repo_path/$l
@@ -106,7 +122,7 @@ for l in ${locales[@]} ; do
                 hg -R $l commit -u "$HG_USER" -m "Merge from mozilla-beta. CLOSED TREE a=release" || ec=$? | tee -a merged_l10n_locales
                 echo "Merge on locale '$l'; exit code '$ec'" >> merged_l10n_locales
             fi
-            hg -R $l push -f -e "ssh -l "$HG_USER" -i $SSH_KEY" ssh://$HG_HOST/$release_repo_path/$l
+            hg -R $l push -f -e "ssh -l "$HG_SSH_USER" -i $SSH_KEY" ssh://$HG_HOST/$release_repo_path/$l
             set +x
         fi
     fi
@@ -118,6 +134,6 @@ if test -r merged_l10n_locales; then
     # attention to the list, just in case, until we have confidence in
     # the automation. No manual corrections were needed for FF 28 (the
     # first use of the corrected script).
-    echo "The following locales needed merging:"
+    echo "The following locales needed some action:"
     cat merged_l10n_locales
 fi

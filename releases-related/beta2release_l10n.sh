@@ -122,7 +122,7 @@ for l in ${locales[@]} ; do
                 hg -R $l commit -u "$HG_USER" -m "Merge from mozilla-beta. CLOSED TREE a=release" || ec=$? | tee -a merged_l10n_locales
                 echo "Merge on locale '$l'; exit code '$ec'" >> merged_l10n_locales
             fi
-            hg -R $l push -f -e "ssh -l "$HG_SSH_USER" -i $SSH_KEY" ssh://$HG_HOST/$release_repo_path/$l
+            hg -R $l push -f -e "ssh -l $HG_SSH_USER -i $SSH_KEY" ssh://$HG_HOST/$release_repo_path/$l
             set +x
         fi
     fi

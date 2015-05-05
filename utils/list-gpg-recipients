@@ -79,6 +79,8 @@ def update_keys_needed(file_list):
                 sys.stderr.write("WARNING: you don't consider key %s valid\n" %
                                  who)
     except ErrorReturnCode_2 as e:
+        # TODO: would be nicer to allow listing, but not encryption, if keys
+        # can't be validated.
         raise SystemExit("Can't get one or more keys from server:\n%s" %
                          e.stderr)
 
@@ -102,7 +104,7 @@ def read_exclude_file(file_name):
     except:
         # ignore this for now, probably should scream if user specified file
         # name, and we did not find that
-        pass
+        raise SystemExit("Can't open alumni file '%s'" % file_name)
     return ids
 
 

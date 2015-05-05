@@ -34,5 +34,9 @@
     { "name": "Ben Hearsum",
     "id": "CD882E88",
     "comment": "key revoked"
+    },
+    { "name": "Mike Shal",
+        "id": "3B0D05D7",
+        "comment": "key abandoned"
     }
 ]

@@ -206,7 +206,6 @@ _os_patterns = [
     ('b2g_panda', ['b2g_panda']),
     ('b2g_buri', ['b2g_mozilla-central_buri']),
     ('b2g_wasabi', ['b2g_mozilla-central_wasabi']),
-    ('b2g_flame', ['b2g_mozilla-central_flame']),
     ('linux64', ['Linux x86-64', 'linux64',
                  'Ubuntu 12.04 x64', 'Ubuntu VM 12.04 x64', 'Ubuntu HW 12.04 x64', 'Ubuntu ASAN VM 12.04 x64',
                  'b2g_ubuntu64_vm']),

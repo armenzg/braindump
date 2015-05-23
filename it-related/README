@@ -77,7 +77,8 @@ reboot -- ``manage_hosts``. It has several subcommands:
     - ``shutdown`` -- shutdown all boxes. (windows boxes are skipped)
 
     - ``gen_nagios_downtimes`` -- Produces output that 'oncall' can use
-      to update nagios without spamming an IRC channel. If you do want
+      to update nagios without spamming an IRC channel. Script is
+      located on nagios1.private.releng.scl3.mozilla.com. If you do want
       to use the irc nagios-bot to downtime hosts, append
       "``:format=irc``" . This prints the irc commands to stdout. You
       need to copy/paste to the right channel.

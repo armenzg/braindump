@@ -123,7 +123,8 @@ def gen_nagios_downtimes(duration='2d', reason='DC move', format='moc'):
     context['USER'] = os.environ.get('USER', 'releng')
     if format is 'moc':
         # format for oncall to run on nagios host and thus reduce 
-        # spam in #sysadmins
+        # spam in #sysadmins, pager duty, etc.
+        # NOTE: script is on nagios1.private.releng.scl3.mozilla.com
         print('''/data/bin/schedule-downtime.pl --host %(host)s'''
               ''' --down-for '%(duration)s' --by %(USER)s'''
               ''' --comment '%(reason)s' ''' % context)

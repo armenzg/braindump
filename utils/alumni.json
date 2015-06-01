@@ -38,5 +38,9 @@
     { "name": "Mike Shal",
         "id": "3B0D05D7",
         "comment": "key abandoned"
+    },
+    { "name": "Massimo Gervasini",
+      "id": "FE5B7C40",
+      "comment": "Left Mozilla"
     }
 ]

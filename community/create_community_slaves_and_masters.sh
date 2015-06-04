@@ -63,7 +63,7 @@ fi
 
 for dir in "$slaves_dir" "$masters_dir"
 do
-    if [ ! -d "$dir" ]; then mkdir "$dir"; fi
+    if [ ! -d "$dir" ]; then mkdir -p "$dir"; fi
 done
 
 # It creates the buildbot environment and updates the repositories

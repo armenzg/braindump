@@ -77,7 +77,8 @@ then
     $venv/bin/python setup.py install || exit
     # Install buildslave
     $venv/bin/pip install buildbot-slave==0.8.4-pre-moz2 \
-        --find-links http://pypi.pub.build.mozilla.org/pub || exit
+        --find-links http://pypi.pub.build.mozilla.org/pub \
+        --trusted-host pypi.pub.build.mozilla.org || exit
     # XXX: It's been reported that OpenSSL==0.13 is needed in some cases
     # This is so we can reach buildbotcustom and tools when activating the venv
     echo "$repos_dir" >> "$venv"/lib/python2.7/site-packages/releng.pth

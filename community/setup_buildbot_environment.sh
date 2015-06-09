@@ -71,6 +71,7 @@ IFS=$OLDIFS
 if [ ! -d "$venv" ]
 then
     virtualenv --no-site-packages "$venv" || exit
+    pip install -U pip
     $venv/bin/pip install -r "$bdu/community/pre_buildbot_requirements.txt"
     # Install buildbot
     cd "$bbo/master"

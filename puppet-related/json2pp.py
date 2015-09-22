@@ -9,6 +9,7 @@ import sys
 
 
 TEMPLATE = """node "%(fqdn)s" {
+    $node_security_level = 'high'
     buildmaster::buildbot_master::mozilla {
         "%(name)s":
             http_port => %(http_port)s,

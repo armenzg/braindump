@@ -16,7 +16,7 @@ TEMPLATE = """node "%(fqdn)s" {
             master_type => "%(master_type)s",
             basedir => "%(basedir)s";
     }
-    include toplevel::server::buildmaster
+    include toplevel::server::buildmaster::mozilla
 }
 """
 

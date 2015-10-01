@@ -72,7 +72,7 @@ if [ ! -d "$venv" ]
 then
     virtualenv --no-site-packages "$venv" || exit
     pip install -U pip
-    $venv/bin/pip install -r "$bdu/community/pre_buildbot_requirements.txt"
+    $venv/bin/pip install -v -r "$bdu/community/pre_buildbot_requirements.txt" || echo "Failed venv generation"; rm -rf $venv; exit
     # Install buildbot
     cd "$bbo/master"
     $venv/bin/python setup.py install || exit

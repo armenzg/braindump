@@ -3,10 +3,24 @@
 # Purpose:  This script does the following:
 #             - generate allthethings.json
 #
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $script_dir
 workdir="$HOME/.mozilla/releng"
-./setup_buildbot_environment.sh -w $workdir
+# Quiet set up
+./setup_buildbot_environment.sh -q -w $workdir
 cd $workdir/repos/buildbot-configs
 source $workdir/venv/bin/activate
 # If you want to use a modified braindump repo change this
 $workdir/repos/braindump/buildbot-related/dump_allthethings.sh
-echo "The file is now in here $workdir/repos/buildbot-configs/allthethings.json"
+allthethings="$workdir/repos/buildbot-configs/allthethings.json"
+
+# If we're executing this in cruncher
+if [ -d /var/www/html/builds/ ]
+then
+    # Do not overwrite the older allthethings
+    cp $allthethings /var/www/html/builds/allthethings.new.json
+    gzip -c $allthethings > /var/www/html/builds/allthethings.new.json.gz
+    chmod 644 /var/www/html/builds/allthethings.new.json*
+else
+    echo "The file is now in here $allthethings"
+fi

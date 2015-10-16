@@ -70,14 +70,17 @@ IFS=$OLDIFS
 
 if [ ! -d "$venv" ]
 then
-    virtualenv --no-site-packages "$venv" || exit
-    pip install -U pip
-    $venv/bin/pip install -v -r "$bdu/community/pre_buildbot_requirements.txt" || echo "Failed venv generation"; rm -rf $venv; exit
+    virtualenv $quiet --no-site-packages "$venv" || exit
+    $venv/bin/pip install $quiet -U pip
+    # If on Mac, you might need to run `xcode-select --install`
+    # XXX: Cryptography on Mac needs to be installed with --no-use-wheel
+    # $venv/bin/pip install $quiet --no-use-wheel cryptography==0.5.4
+    $venv/bin/pip install $quiet -r "$bdu/community/pre_buildbot_requirements.txt" || exit
     # Install buildbot
     cd "$bbo/master"
-    $venv/bin/python setup.py install || exit
+    $venv/bin/pip install $quiet -e . || exit
     # Install buildslave
-    $venv/bin/pip install buildbot-slave==0.8.4-pre-moz2 \
+    $venv/bin/pip install $quiet buildbot-slave==0.8.4-pre-moz2 \
         --find-links http://pypi.pub.build.mozilla.org/pub \
         --trusted-host pypi.pub.build.mozilla.org || exit
     # XXX: It's been reported that OpenSSL==0.13 is needed in some cases

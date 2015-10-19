@@ -124,10 +124,11 @@ fi
 
 if [ ! -z "$debug" ]
 then
+    cd $bco
+    ./test-masters.sh
     $venv/bin/pip freeze
-    $venv/bin/python -v
+    $venv/bin/python --version
     $venv/bin/python -c "import sys; import pprint; pprint.pprint(sys.path)"
     cat "$venv"/lib/python2.7/site-packages/releng.pth
-    ./test-masters.sh
 fi
 } 2>&1 | tee "$output_file"

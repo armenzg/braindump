@@ -32,9 +32,13 @@ fi
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Load common variables
+# Load important variables: venv, masters_dir, slaves_dir, repos_dir et al
+# Update PATH and PYTHONPATH
 . "$script_dir/buildbot_config.sh" -w "$workdir"
 
+# At the end of the file there is a closing bracket
+# This is used to log stdout and stderr to and output file
+{
 if [ ! -d "$repos_dir" ]
 then
     mkdir -p "$repos_dir"
@@ -68,21 +72,28 @@ do
 done
 IFS=$OLDIFS
 
+function move_and_exit() {
+    echo "ERROR: Failed venv generation (moved to $workdir/failed_venv."
+    mv $venv $workdir/failed_venv
+    rm -rf $venv
+    exit 1
+}
+
 if [ ! -d "$venv" ]
 then
-    virtualenv $quiet --no-site-packages "$venv" || exit
+    virtualenv $quiet --no-site-packages "$venv" || move_and_exit
     $venv/bin/pip install $quiet -U pip
     # If on Mac, you might need to run `xcode-select --install`
-    # XXX: Cryptography on Mac needs to be installed with --no-use-wheel
-    # $venv/bin/pip install $quiet --no-use-wheel cryptography==0.5.4
-    $venv/bin/pip install $quiet -r "$bdu/community/pre_buildbot_requirements.txt" || exit
+    # XXX: Could not make it work on Mac. Cryptography on Mac needs to be installed with --no-use-wheel
+    $venv/bin/pip install $quiet -r "$bdu/community/pre_buildbot_requirements.txt" \
+	|| move_and_exit
     # Install buildbot
     cd "$bbo/master"
-    $venv/bin/pip install $quiet -e . || exit
+    $venv/bin/pip install $quiet -e . || move_and_exit
     # Install buildslave
     $venv/bin/pip install $quiet buildbot-slave==0.8.4-pre-moz2 \
         --find-links http://pypi.pub.build.mozilla.org/pub \
-        --trusted-host pypi.pub.build.mozilla.org || exit
+        --trusted-host pypi.pub.build.mozilla.org || move_and_exit
     # XXX: It's been reported that OpenSSL==0.13 is needed in some cases
     # This is so we can reach buildbotcustom and tools when activating the venv
     echo "$repos_dir" >> "$venv"/lib/python2.7/site-packages/releng.pth
@@ -101,3 +112,4 @@ then
     echo "environment."
     echo ""
 fi
+} 2>&1 | tee "$workdir/output_`date +%Y%m%d_%H%M%S`.txt"

@@ -7,11 +7,17 @@
 while getopts cw:qh opts; do
    case ${opts} in
       c) clobber=1 ;;
+      d) debug=1 ;;
       w) workdir=${OPTARG} ;;
       q) quiet="-q" ;;
       h) help=1 ;;
    esac
 done
+
+if [ ! -z "$debug" ];
+then
+   set -ex
+fi
 
 if [ ! -z $help ];
 then
@@ -112,4 +118,4 @@ then
     echo "environment."
     echo ""
 fi
-} 2>&1 | tee "$workdir/output_`date +%Y%m%d_%H%M%S`.txt"
+} 2>&1 | tee "$workdir/output.txt"

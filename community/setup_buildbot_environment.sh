@@ -4,7 +4,7 @@
 #             - check-out and update all required Buildbot Release Engineering repositories
 #             - create buildbot virtual environments
 #
-while getopts cw:qh opts; do
+while getopts cdw:qh opts; do
    case ${opts} in
       c) clobber=1 ;;
       d) debug=1 ;;
@@ -34,6 +34,7 @@ if [ ! -z "$clobber" ];
 then
     echo "___CLOBBERING___ $workdir"
     rm -rf $workdir
+    mkdir $workdir
 fi
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -44,6 +45,8 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # At the end of the file there is a closing bracket
 # This is used to log stdout and stderr to and output file
+output_file="$workdir/output.txt"
+touch $output_file
 {
 if [ ! -d "$repos_dir" ]
 then
@@ -118,4 +121,13 @@ then
     echo "environment."
     echo ""
 fi
-} 2>&1 | tee "$workdir/output.txt"
+
+if [ ! -z "$debug" ]
+then
+    $venv/bin/pip freeze
+    $venv/bin/python -v
+    $venv/bin/python -c "import sys; import pprint; pprint.pprint(sys.path)"
+    cat "$venv"/lib/python2.7/site-packages/releng.pth
+    ./test-masters.sh
+fi
+} 2>&1 | tee "$output_file"

@@ -4,11 +4,12 @@
 #             - check-out and update all required Buildbot Release Engineering repositories
 #             - create buildbot virtual environments
 #
-while getopts cdw:qh opts; do
+while getopts cdw:p:qh opts; do
    case ${opts} in
       c) clobber=1 ;;
       d) debug=1 ;;
       w) workdir=${OPTARG} ;;
+      p) python_path=${OPTARG} ;;
       q) quiet="-q" ;;
       h) help=1 ;;
    esac
@@ -19,10 +20,16 @@ then
    set -ex
 fi
 
+if [ ! -z "$python_path" ];
+then
+   # Parameter for virtualenv
+   python_path="-p $python_path"
+fi
+
 if [ ! -z $help ];
 then
     echo "./setup_buildbot_environment.sh [-w alt_workdir] [-h] [-q]"
-    exit
+    exit 1
 fi
 
 if [ -z "$workdir" ];
@@ -37,22 +44,41 @@ then
     mkdir $workdir
 fi
 
+function gather_debug_information() {
+    set -ex
+    cd $bco
+    ./test-masters.sh
+    $venv/bin/pip freeze
+    $venv/bin/python --version
+    $venv/bin/python -c "import sys; import pprint; pprint.pprint(sys.path)"
+    cat "$venv"/lib/python2.7/site-packages/releng.pth
+}
+
+function move_and_exit() {
+    echo "ERROR: Failed venv generation (moved to $workdir/failed_venv."
+    mv $venv $workdir/failed_venv
+    rm -rf $venv
+    gather_debug_information
+    echo "EXIT setup_buildbot_environment.sh"
+    exit 1
+}
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Load important variables: venv, masters_dir, slaves_dir, repos_dir et al
 # Update PATH and PYTHONPATH
 . "$script_dir/buildbot_config.sh" -w "$workdir"
 
-# At the end of the file there is a closing bracket
-# This is used to log stdout and stderr to and output file
-output_file="$workdir/output.txt"
-touch $output_file
-{
 if [ ! -d "$repos_dir" ]
 then
     mkdir -p "$repos_dir"
 fi
+# At the end of the file there is a closing bracket
+# This is used to log stdout and stderr to and output file
+output_file="$workdir/output.txt"
+touch $output_file
 
+{
 # Checkout and update all repos
 OLDIFS=$IFS
 IFS=','
@@ -65,7 +91,7 @@ do
     branch=$2
     if [ ! -d "$repo_path" ]
     then
-        hg clone $quiet http://hg.mozilla.org/build/$repo_name || exit
+        hg clone $quiet http://hg.mozilla.org/build/$repo_name || exit 1
     fi
     # Let's update to the right branch
     cd $repo_path
@@ -81,17 +107,12 @@ do
 done
 IFS=$OLDIFS
 
-function move_and_exit() {
-    echo "ERROR: Failed venv generation (moved to $workdir/failed_venv."
-    mv $venv $workdir/failed_venv
-    rm -rf $venv
-    exit 1
-}
-
 if [ ! -d "$venv" ]
 then
-    virtualenv $quiet --no-site-packages "$venv" || move_and_exit
+    virtualenv $python_path $quiet --no-site-packages "$venv" || move_and_exit
     $venv/bin/pip install $quiet -U pip
+    # To remove InsecurePlatformWarning output
+    $venv/bin/pip install requests[security]
     # If on Mac, you might need to run `xcode-select --install`
     # XXX: Could not make it work on Mac. Cryptography on Mac needs to be installed with --no-use-wheel
     $venv/bin/pip install $quiet -r "$bdu/community/pre_buildbot_requirements.txt" \
@@ -124,11 +145,7 @@ fi
 
 if [ ! -z "$debug" ]
 then
-    cd $bco
-    ./test-masters.sh
-    $venv/bin/pip freeze
-    $venv/bin/python --version
-    $venv/bin/python -c "import sys; import pprint; pprint.pprint(sys.path)"
-    cat "$venv"/lib/python2.7/site-packages/releng.pth
+    gather_debug_information
 fi
+
 } 2>&1 | tee "$output_file"

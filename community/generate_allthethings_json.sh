@@ -3,11 +3,25 @@
 # Purpose:  This script does the following:
 #             - generate allthethings.json
 #
+while getopts p:q opts; do
+   case ${opts} in
+      p) python_path=${OPTARG} ;;
+      q) quiet="-q" ;;
+   esac
+done
+
+if [ ! -z "$python_path" ];
+then
+   # Parameter for virtualenv
+   python_path="-p $python_path"
+fi
+
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir
 workdir="$HOME/.mozilla/releng"
 # Quiet set up
-./setup_buildbot_environment.sh -q -w $workdir
+./setup_buildbot_environment.sh $quiet "$python_path" -w $workdir
+
 cd $workdir/repos/buildbot-configs
 source $workdir/venv/bin/activate
 # If you want to use a modified braindump repo change this

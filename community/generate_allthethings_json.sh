@@ -20,24 +20,27 @@ workdir="$HOME/.mozilla/releng"
 allthethings="$workdir/repos/buildbot-configs/allthethings.json"
 # If you want to use a modified braindump repo change this path
 dump_script="$workdir/repos/braindump/buildbot-related/dump_allthethings.sh"
+publishing_path="/var/www/html/builds/v2/"
+repos_dir="$workdir/repos"
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir
 
 function make_allthethings() {
-    cd $workdir/repos/buildbot-configs
+    cd $repos_dir/buildbot-configs
     source $workdir/venv/bin/activate
     echo "making all the things!"
     # Generate allthethings.json
-    $dump_script
+    $dump_script 2>&1 | grep -v "[loading|skipping]"
 }
 
 # If we're executing this in cruncher we don't need to call
 # setup_buildbot_environment.sh (since we've already done so)
 # The main difference here is the "updated" or not logic
 if [ -d /var/www/html/builds/ ]; then
-    cd $workdir/repos
+    cd $repos_dir
     # Logic borrowed from catlee
     updated=0
+    rev_signature=''
     for d in buildbot-configs buildbotcustom tools; do
         t=$(mktemp)
         hg -R $d pull -q
@@ -48,14 +51,23 @@ if [ -d /var/www/html/builds/ ]; then
             echo "$d updated something"
             updated=1
         fi
+        only_hash=`echo $cur_rev | awk -F " " '{print $1}'`
+        rev_signature="${rev_signature}_${only_hash}"
     done
 
     if [ "$updated" = "1" ]; then
         make_allthethings
-        # Do not overwrite the older allthethings
-        cp $allthethings /var/www/html/builds/allthethings.new.json
-        gzip -c $allthethings > /var/www/html/builds/allthethings.new.json.gz
-        chmod 644 /var/www/html/builds/allthethings.new.json*
+        previous_file="$publishing_path/allthethings.json"
+        new_file="$publishing_path/allthethings.${rev_signature}.json"
+        # Publish new file
+        cp $allthethings $new_file
+        # Generate differences with the previous allthethings.json
+        $repos_dir/braindump/buildbot-related/diff_allthethings.py \
+           $publishing_path/allthethings.json $new_file > $publishing_path/allthethings.${rev_signature}.txt
+        # Symlink to latest
+        ln -f -s $new_file $previous_file
+        gzip -c $new_file > $publishing_path/allthethings.json.gz
+        chmod 644 $publishing_path/allthethings.*
     fi
 else
     ./setup_buildbot_environment.sh $quiet "$python_path" -w $workdir

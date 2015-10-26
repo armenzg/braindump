@@ -20,7 +20,7 @@ workdir="$HOME/.mozilla/releng"
 allthethings="$workdir/repos/buildbot-configs/allthethings.json"
 # If you want to use a modified braindump repo change this path
 dump_script="$workdir/repos/braindump/buildbot-related/dump_allthethings.sh"
-publishing_path="/var/www/html/builds/v2/"
+publishing_path="/var/www/html/builds/v2"
 repos_dir="$workdir/repos"
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir
@@ -30,7 +30,7 @@ function make_allthethings() {
     source $workdir/venv/bin/activate
     echo "making all the things!"
     # Generate allthethings.json
-    $dump_script 2>&1 | grep -v "[loading|skipping]"
+    $dump_script #2>&1 | grep -v "[loading|skipping]"
 }
 
 # If we're executing this in cruncher we don't need to call
@@ -63,9 +63,10 @@ if [ -d /var/www/html/builds/ ]; then
         cp $allthethings $new_file
         # Generate differences with the previous allthethings.json
         $repos_dir/braindump/buildbot-related/diff_allthethings.py \
-           $publishing_path/allthethings.json $new_file > $publishing_path/allthethings.${rev_signature}.txt
-        # Symlink to latest
-        ln -f -s $new_file $previous_file
+           $previous_file $new_file > \
+           $publishing_path/allthethings.${rev_signature}.txt
+        # Overwrite the previous allthethings.json
+        cp $new_file $previous_file
         gzip -c $new_file > $publishing_path/allthethings.json.gz
         chmod 644 $publishing_path/allthethings.*
     fi

@@ -28,9 +28,6 @@ generateURL() {
     local ANDROID_LAYOUT=$5
     local ARCH_FILE=$6
 
-    # Before 37
-    # https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$version-candidates/build${build}/android/multi/fennec-$version.multi.android-arm.apk
-
     # From FX 37, we separated arm api v9 & v11. So, the URL changed.
     # Example:
     # http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/37.0b1-candidates/build1/android-api-9/multi/fennec-37.0b1.multi.android-arm.apk
@@ -47,16 +44,12 @@ downloadAPK() {
 
     MAJOR=$(echo $VERSION|cut -d\. -f1)
 
-    if test $MAJOR -ge 37 -a "$ARCH" == "arm"; then
+    if test "$ARCH" == "arm"; then
         # Change introduced in Fx 37 (arm v7 only)
         ANDROID_LAYOUT="v9_v11"
     else
         # android-x86 for example
         ANDROID_LAYOUT="android-$ARCH"
-        if test $MAJOR -lt 37 -a "$ARCH" == "arm"; then
-            # Before 37, we had android (arm) and android-x86
-            ANDROID_LAYOUT="android"
-        fi
     fi
 
     if test "$ARCH" == "x86"; then

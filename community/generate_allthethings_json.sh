@@ -28,9 +28,8 @@ cd $script_dir
 function make_allthethings() {
     cd $repos_dir/buildbot-configs
     source $workdir/venv/bin/activate
-    echo "making all the things!"
     # Generate allthethings.json
-    $dump_script #2>&1 | grep -v "[loading|skipping]"
+    $dump_script 2>&1 | grep -v "[loading|skipping]"
 }
 
 # If we're executing this in cruncher we don't need to call

@@ -20,7 +20,7 @@ workdir="$HOME/.mozilla/releng"
 allthethings="$workdir/repos/buildbot-configs/allthethings.json"
 # If you want to use a modified braindump repo change this path
 dump_script="$workdir/repos/braindump/buildbot-related/dump_allthethings.sh"
-publishing_path="/var/www/html/builds/v2"
+publishing_path="/var/www/html/builds"
 repos_dir="$workdir/repos"
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir

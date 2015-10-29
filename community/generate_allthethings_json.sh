@@ -47,7 +47,6 @@ if [ -d /var/www/html/builds/ ]; then
         hg -R $d update -q
         cur_rev=$(hg -R $d id)
         if [ "$prev_rev" != "$cur_rev" ]; then
-            echo "$d updated something"
             updated=1
         fi
         only_hash=`echo $cur_rev | awk -F " " '{print $1}'`

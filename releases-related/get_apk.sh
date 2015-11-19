@@ -108,7 +108,6 @@ version="$1"
 # Pull binaries down, then make sure we got an archive and not a error
 # page
 downloadAPK $version "arm" $build
-downloadAPK $version "arm" $build "ko"
 downloadAPK $version "x86" $build
 
 trap "" EXIT

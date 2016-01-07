@@ -10,7 +10,7 @@ HGTOOL=$TOOLS_DIR/buildfarm/utils/hgtool.py
 REPO_DIR=$WRK_DIR/git-shared/repo
 export HG_SHARE_BASE_DIR=$WRK_DIR/hg-shared
 
-DEVICES="dolphin dolphin-512 emulator emulator-jb emulator-kk flame-kk nexus-4"
+DEVICES="dolphin emulator emulator-jb emulator-kk flame-kk nexus-4"
 TRY_DEVICES="emulator"
 
 prep_hg_shares(){
@@ -29,7 +29,7 @@ prep_try_git_shares(){
     rm -rf .repo
     ln -sf $REPO_DIR .repo
     # No need to update the working copy
-    export REPO_SYNC_FLAGS=--network-only
+    export REPO_SYNC_FLAGS="--network-only --force-sync"
     for device in $TRY_DEVICES; do
         time ./config.sh -q $device ../mozilla-central/b2g/config/$device/sources.xml < /dev/null
     done
@@ -50,7 +50,7 @@ prep_git_shares(){
     rm -rf .repo
     ln -sf $REPO_DIR .repo
     # No need to update the working copy
-    export REPO_SYNC_FLAGS=--network-only
+    export REPO_SYNC_FLAGS="--network-only --force-sync"
     for device in $DEVICES; do
         time ./config.sh -q $device ../mozilla-central/b2g/config/$device/sources.xml < /dev/null
     done

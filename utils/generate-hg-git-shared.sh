@@ -10,7 +10,7 @@ HGTOOL=$TOOLS_DIR/buildfarm/utils/hgtool.py
 REPO_DIR=$WRK_DIR/git-shared/repo
 export HG_SHARE_BASE_DIR=$WRK_DIR/hg-shared
 
-DEVICES="dolphin emulator emulator-jb emulator-kk flame-kk nexus-4"
+DEVICES="emulator emulator-jb emulator-kk flame-kk nexus-4"
 TRY_DEVICES="emulator"
 
 prep_hg_shares(){

@@ -26,10 +26,13 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir
 
 function make_allthethings() {
-    cd $repos_dir/buildbot-configs
     source $workdir/venv/bin/activate
+    echo "making all the things!"
+    (
+    cd $repos_dir/buildbot-configs
     # Generate allthethings.json
-    $dump_script 2>&1 | grep -v "[loading|skipping]"
+    bash $dump_script $allthethings 2>&1
+    )
 }
 
 # If we're executing this in cruncher we don't need to call
@@ -41,7 +44,6 @@ if [ -d /var/www/html/builds/ ]; then
     updated=0
     rev_signature=''
     for d in buildbot-configs buildbotcustom tools; do
-        t=$(mktemp)
         hg -R $d pull -q
         prev_rev=$(hg -R $d id)
         hg -R $d update -q
@@ -54,7 +56,10 @@ if [ -d /var/www/html/builds/ ]; then
     done
 
     if [ "$updated" = "1" ]; then
-        make_allthethings
+        log="$publishing_path/allthethings.`date +%Y%m%d%H%M%S`.log"
+        # Generate allthethings.json
+        make_allthethings 2>&1 > $log || echo "Failed to generate allthething.json. Check $log"
+
         previous_file="$publishing_path/allthethings.json"
         new_file="$publishing_path/allthethings.${rev_signature}.json"
         # Publish new file
@@ -62,7 +67,7 @@ if [ -d /var/www/html/builds/ ]; then
         # Generate differences with the previous allthethings.json
         $repos_dir/braindump/buildbot-related/diff_allthethings.py \
            $previous_file $new_file > \
-           $publishing_path/allthethings.${rev_signature}.txt
+           $publishing_path/allthethings.${rev_signature}.differences.txt
         # Overwrite the previous allthethings.json
         cp $new_file $previous_file
         gzip -c $new_file > $publishing_path/allthethings.json.gz

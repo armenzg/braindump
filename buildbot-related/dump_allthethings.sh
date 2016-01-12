@@ -19,7 +19,7 @@ for needed_dir in ${shm[@]}; do
         good_shm=false
     fi
 done
-$good_shm || echo "Bad shm" && exit 1
+$good_shm || exit 1
 
 if [ -z "$1" ]; then
     OUTPUT="allthethings.json"
@@ -40,7 +40,7 @@ trap 'for cmd in "${atexit[@]}"; do eval $cmd; done' EXIT
 # errors (?), so fetch it once here and pass it in.
 MASTERS_JSON=$(mktemp $WORK/tmp.masters.XXXXXXXXXX)
 if [[ $MASTERS_JSON_URL =~ ^http ]]; then
-    wget -q -O$MASTERS_JSON "$MASTERS_JSON_URL" || echo "Failed to download $MASTERS_JSON_URL" && exit 1
+    wget -q -O$MASTERS_JSON "$MASTERS_JSON_URL" || exit 1
 else
     cp "$MASTERS_JSON_URL" $MASTERS_JSON
 fi
@@ -79,7 +79,7 @@ for MASTER in ${MASTERS[*]}; do
     fi
     MASTER_DIRS+=("$WORK/$MASTER/master.cfg")
 done
-python $(dirname $0)/dump_master_json.py -o $OUTPUT ${MASTER_DIRS[*]} || echo "Failed dump_master_json.py"
+python $(dirname $0)/dump_master_json.py -o $OUTPUT ${MASTER_DIRS[*]}
 
 if [ -s $FAILFILE ]; then
     echo "*** $(wc -l < $FAILFILE) master tests failed ***" >&2

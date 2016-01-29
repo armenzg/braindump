@@ -79,7 +79,7 @@ for MASTER in ${MASTERS[*]}; do
     fi
     MASTER_DIRS+=("$WORK/$MASTER/master.cfg")
 done
-python $(dirname $0)/dump_master_json.py -o $OUTPUT ${MASTER_DIRS[*]}
+python $(dirname $0)/dump_master_json.py -o $OUTPUT ${MASTER_DIRS[*]} || exit=1
 
 if [ -s $FAILFILE ]; then
     echo "*** $(wc -l < $FAILFILE) master tests failed ***" >&2

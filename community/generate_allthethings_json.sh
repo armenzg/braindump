@@ -20,16 +20,20 @@ workdir="$HOME/.mozilla/releng"
 allthethings="$workdir/repos/buildbot-configs/allthethings.json"
 # If you want to use a modified braindump repo change this path
 dump_script="$workdir/repos/braindump/buildbot-related/dump_allthethings.sh"
-publishing_path="/var/www/html/builds"
+original_file="/var/www/html/builds/allthethings.json"
+publishing_path="/var/www/html/builds/allthethings"
 repos_dir="$workdir/repos"
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir
 
 function make_allthethings() {
-    cd $repos_dir/buildbot-configs
     source $workdir/venv/bin/activate
+    echo "making all the things!"
+    (
+    cd $repos_dir/buildbot-configs
     # Generate allthethings.json
-    $dump_script 2>&1 | grep -v "[loading|skipping]"
+    $dump_script $allthethings || exit 1
+    )
 }
 
 # If we're executing this in cruncher we don't need to call
@@ -41,7 +45,6 @@ if [ -d /var/www/html/builds/ ]; then
     updated=0
     rev_signature=''
     for d in buildbot-configs buildbotcustom tools; do
-        t=$(mktemp)
         hg -R $d pull -q
         prev_rev=$(hg -R $d id)
         hg -R $d update -q
@@ -54,18 +57,23 @@ if [ -d /var/www/html/builds/ ]; then
     done
 
     if [ "$updated" = "1" ]; then
-        make_allthethings
-        previous_file="$publishing_path/allthethings.json"
-        new_file="$publishing_path/allthethings.${rev_signature}.json"
+        date=`date +%Y%m%d%H%M%S`
+        log="$publishing_path/allthethings.${date}.log"
+        # Generate allthethings.json
+        make_allthethings 2>&1 > $log || cat $log
+
+        original_file="$publishing_path/allthethings.json"
+        new_file="$publishing_path/allthethings.${date}.${rev_signature}.json"
         # Publish new file
         cp $allthethings $new_file
         # Generate differences with the previous allthethings.json
         $repos_dir/braindump/buildbot-related/diff_allthethings.py \
-           $previous_file $new_file > \
-           $publishing_path/allthethings.${rev_signature}.txt
+           $original_file $new_file > \
+           $publishing_path/allthethings.${date}.${rev_signature}.differences.txt
         # Overwrite the previous allthethings.json
-        cp $new_file $previous_file
+        cp $new_file $original_file
         gzip -c $new_file > $publishing_path/allthethings.json.gz
+        chmod 644 $original_file
         chmod 644 $publishing_path/allthethings.*
     fi
 else

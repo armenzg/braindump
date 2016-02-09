@@ -16,24 +16,49 @@ then
    python_path="-p $python_path"
 fi
 
+# Root variables
+publishing_path="/var/www/html/builds/allthethings"
 workdir="$HOME/.mozilla/releng"
+
 allthethings="$workdir/repos/buildbot-configs/allthethings.json"
-# If you want to use a modified braindump repo change this path
+date=`date +%Y%m%d%H%M%S`
 dump_script="$workdir/repos/braindump/buildbot-related/dump_allthethings.sh"
 original_file="/var/www/html/builds/allthethings.json"
-publishing_path="/var/www/html/builds/allthethings"
 repos_dir="$workdir/repos"
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $script_dir
 
+cleanup() {
+    exit_code=$?
+    if [ $exit_code -ne 0 ] && [[ $log ]]
+    then
+      echo "Failed to generate allthethings.json; dumping log."
+      cat $log
+    fi
+
+    exit $exit_code
+}
+
+trap cleanup EXIT INT
+
 function make_allthethings() {
+    log=$1
     source $workdir/venv/bin/activate
-    echo "making all the things!"
-    (
     cd $repos_dir/buildbot-configs
+
     # Generate allthethings.json
-    $dump_script $allthethings || exit 1
-    )
+    if [[ $log ]]
+    then
+      $dump_script $allthethings > $log 2>&1
+    else
+      $dump_script $allthethings
+    fi
+    exit_code=$?
+
+    if [ $exit_code -ne 0 ]
+    then
+      exit $exit_code
+    fi
 }
 
 # If we're executing this in cruncher we don't need to call
@@ -57,12 +82,9 @@ if [ -d /var/www/html/builds/ ]; then
     done
 
     if [ "$updated" = "1" ]; then
-        date=`date +%Y%m%d%H%M%S`
-        log="$publishing_path/allthethings.${date}.log"
         # Generate allthethings.json
-        make_allthethings 2>&1 > $log || cat $log
+        make_allthethings "$publishing_path/allthethings.${date}.log"
 
-        original_file="$publishing_path/allthethings.json"
         new_file="$publishing_path/allthethings.${date}.${rev_signature}.json"
         # Publish new file
         cp $allthethings $new_file
@@ -79,6 +101,7 @@ if [ -d /var/www/html/builds/ ]; then
 else
     ./setup_buildbot_environment.sh $quiet "$python_path" -w $workdir
 
+    echo "Making allthethings! It will take few minutes."
     make_allthethings
     echo "The file is now in here $allthethings"
 fi

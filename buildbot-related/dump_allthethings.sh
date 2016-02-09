@@ -34,7 +34,7 @@ actioning="Checking"
 MASTERS_JSON_URL="${MASTERS_JSON_URL:-https://hg.mozilla.org/build/tools/raw-file/tip/buildfarm/maintenance/production-masters.json}"
 
 atexit=()
-trap 'echo "dump_allthethings.sh exit code: $?; "for cmd in "${atexit[@]}"; do eval $cmd; done; pkill -P $$' EXIT
+trap 'echo "dump_allthethings.sh exit code: $?"; for cmd in "${atexit[@]}"; do eval $cmd; done; pkill -P $$' EXIT
 
 # I have had problems where a whole bunch of parallel HTTP requests caused
 # errors (?), so fetch it once here and pass it in.

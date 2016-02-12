@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# /usr/bin/env python2.7
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,31 +9,34 @@ import argparse
 import urllib2
 import json
 
-
-__version__ = "1.1"
+__version__ = "1.2"
 
 pending_url = 'https://secure.pub.build.mozilla.org/builddata/buildjson/builds-pending.js'
-all_things_url = 'https://secure.pub.build.mozilla.org/builddata/reports/allthethings.json'
+allthethings_path = '/var/www/html/builds/allthethings.json'
 status_code = {'OK': 0, 'WARNING': 1, "CRITICAL": 2, "UNKNOWN": 3}
 
 
-# get the pending builds
+# get the pending builds and their count
 def get_pending_builds():
-    pending_builds = []
+    pending_builds = {}
     response = urllib2.urlopen(pending_url)
     result = json.loads(response.read())
     for branch in result['pending'].keys():
         for revision in result['pending'][branch].keys():
             for request in result['pending'][branch][revision]:
-                pending_builds.append(request['buildername'])
+                k = request['buildername']
+                if k in pending_builds.keys():
+                    pending_builds[k] += 1
+                else:
+                    pending_builds[k] = 1
     return pending_builds
 
 
 # get the builder names and their corresponding slavepools
 def get_builders_and_slavepools():
     builders_and_slavepools = []
-    response = urllib2.urlopen(all_things_url)
-    result = json.loads(response.read())
+    with open(allthethings_path) as f:
+        result = json.load(f)
     slavepool_cache = {}
     for builder_name in result['builders'].keys():
         slavepool_id = result['builders'][builder_name]['slavepool']
@@ -74,14 +77,14 @@ def get_count_by_slavepool(pending_builds, builders_and_slavepools, slavepools):
     count_by_slavepool = []
     for m in range(0, len(slavepools)):
         count_by_slavepool.append([slavepools[m][0], 0])
-    for i in range(0, len(pending_builds)):
-        for j in range(0, len(builders_and_slavepools)):
-            if pending_builds[i] == builders_and_slavepools[j][0]:
+    for i,j in pending_builds.iteritems():
+        for k in range(0, len(builders_and_slavepools)):
+            if i == builders_and_slavepools[k][0]:
                 for m in range(0, len(count_by_slavepool)):
-                    if builders_and_slavepools[j][1] == slavepools[m][0]:
-                        count_by_slavepool[m][1] = count_by_slavepool[m][1] + 1
-    count_by_slavepool_sorted = sorted(count_by_slavepool, key=lambda list: list[1], reverse=True)
-    return count_by_slavepool_sorted
+                    if builders_and_slavepools[k][1] == slavepools[m][0]:
+                        count_by_slavepool[m][1] += j
+    top_count_by_slavepool = sorted(count_by_slavepool, key=lambda list: list[1], reverse=True)
+    return top_count_by_slavepool
 
 
 def pending_builds_status(pending, critical_threshold, warning_threshold):
@@ -91,7 +94,6 @@ def pending_builds_status(pending, critical_threshold, warning_threshold):
         return 'WARNING'
     else:
         return 'OK'
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(version="%(prog)s " + __version__)
@@ -107,12 +109,13 @@ if __name__ == '__main__':
         pending_builds = get_pending_builds()
         builders_and_slavepools = get_builders_and_slavepools()
         slavepools = get_slavepools(builders_and_slavepools)
-        count_by_slavepool = get_count_by_slavepool(pending_builds, builders_and_slavepools, slavepools)
+        top_count_by_slavepool = get_count_by_slavepool(pending_builds, builders_and_slavepools, slavepools)
         status = pending_builds_status(
-            count_by_slavepool[0][1], args.critical_threshold, args.warning_threshold)
-        print '%s Pending Builds: %i' % (status, count_by_slavepool[0][1]),\
-            "on %s" % count_by_slavepool[0][0]
+            top_count_by_slavepool[0][1], args.critical_threshold, args.warning_threshold)
+        print '%s Pending Builds: %i' % (status, top_count_by_slavepool[0][1]),\
+            "on %s" % top_count_by_slavepool[0][0]
         sys.exit(status_code[status])
     except Exception as e:
         print e
         sys.exit(status_code.get('UNKNOWN'))
+

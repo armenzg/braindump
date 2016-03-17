@@ -95,7 +95,8 @@ if [ -d /var/www/html/builds/ ]; then
         # Overwrite the previous allthethings.json
         cp $new_file $original_file
         gzip -c $new_file > $publishing_path/allthethings.json.gz
-        chmod 644 $original_file
+        gzip -c $new_file > ${original_file}.gz
+        chmod 644 ${original_file}{,.gz}
         chmod 644 $publishing_path/allthethings.*
     fi
 else

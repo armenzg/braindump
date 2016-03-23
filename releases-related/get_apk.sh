@@ -28,7 +28,8 @@ generateURL() {
     local ANDROID_LAYOUT=$5
     local ARCH_FILE=$6
 
-    # From FX 37, we separated arm api v9 & v11. So, the URL changed.
+    # From FX 37, we separated arm api v9 & v1X. So, the URL changed.
+    # From FX 45, v11 has been renamed to v15 (bug 1155801)
     # Example:
     # http://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/37.0b1-candidates/build1/android-api-9/multi/fennec-37.0b1.multi.android-arm.apk
     echo "https://ftp.mozilla.org/pub/mozilla.org/mobile/candidates/$VERSION-candidates/build${BUILD}/${ANDROID_LAYOUT}/${LOCALE}/fennec-$VERSION.${LOCALE}.android-$ARCH_FILE.apk"
@@ -46,7 +47,7 @@ downloadAPK() {
 
     if test "$ARCH" == "arm"; then
         # Change introduced in Fx 37 (arm v7 only)
-        ANDROID_LAYOUT="v9_v11"
+        ANDROID_LAYOUT="v9_v15"
     else
         # android-x86 for example
         ANDROID_LAYOUT="android-$ARCH"
@@ -66,17 +67,17 @@ downloadAPK() {
 
     echo "Downloading version $VERSION build #$BUILD for arch $ARCH (locale $LOCALE)"
 
-    if test "$ANDROID_LAYOUT" == "v9_v11"; then
-        # When dealing with API v9 & V11, we want to rename the file
-        # until bug 1122059 is fixed
+    if test "$ANDROID_LAYOUT" == "v9_v15"; then
+        # When dealing with API v9 & V15, we want to rename the file
+        # until bug 1522059 is fixed
         # Also manage the KO locale
         FILENAME_ARM_V9=fennec-$VERSION.$LOCALE.android-arm-api-9.apk
         curl -sS $(generateURL $VERSION $ARCH $BUILD $LOCALE android-api-9 $ARCH_FILE) -o $FILENAME_ARM_V9
         checkAPK $FILENAME_ARM_V9
 
-        FILENAME_ARM_V11=fennec-$VERSION.$LOCALE.android-arm-api-11.apk
-        curl -sS $(generateURL $VERSION $ARCH $BUILD $LOCALE android-api-11 $ARCH_FILE) -o $FILENAME_ARM_V11
-        checkAPK $FILENAME_ARM_V11
+        FILENAME_ARM_V15=fennec-$VERSION.$LOCALE.android-arm-api-15.apk
+        curl -sS $(generateURL $VERSION $ARCH $BUILD $LOCALE android-api-15 $ARCH_FILE) -o $FILENAME_ARM_V15
+        checkAPK $FILENAME_ARM_V15
     else
         # Manage x86
         FILENAME=fennec-$VERSION.$LOCALE.android-$ARCH_FILE.apk

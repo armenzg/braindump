@@ -14,6 +14,9 @@ __version__ = "1.0"
 submitted_at = []
 pending_url = 'https://secure.pub.build.mozilla.org/builddata/buildjson/builds-pending.js'
 status_code = {'OK': 0, 'WARNING': 1, "CRITICAL": 2, "UNKNOWN": 3}
+# Empty this list once Bug 1191481 and children are done
+ignore_prefixes = ['Windows 10 64-bit']
+ignore_cache = {}
 
 
 # Get the current unix timestamp
@@ -22,15 +25,26 @@ def get_unix_time():
     return k
 
 
+# Keep track of builders we should ignore
+def should_ignore(name):
+    if ignore_cache.get(name) is None:
+        ignore_cache[name] = any([name.startswith(p) for p in ignore_prefixes])
+    return ignore_cache[name]
+
+
 # Get the earliest 'submitted_at' value
 def get_min_submitted_at():
     response = urllib2.urlopen(pending_url)
     result = json.loads(response.read())
+    ignored = 0
     for branch in result['pending'].keys():
         for revision in result['pending'][branch].keys():
             for request in result['pending'][branch][revision]:
+                if should_ignore(request['buildername']):
+                    ignored += 1
+                    continue
                 submitted_at.append(request['submitted_at'])
-    return min(submitted_at)
+    return min(submitted_at), ignored
 
 
 # Convert a unix timestamp to a readable value
@@ -61,13 +75,12 @@ if __name__ == '__main__':
 
     try:
         unix_time = get_unix_time()
-        min_submitted_at = get_min_submitted_at()
+        min_submitted_at, ignored = get_min_submitted_at()
         waiting_time = unix_time - min_submitted_at
         status = pending_builds_status(waiting_time, option.critical_threshold, option.warning_threshold)
         time = get_unix_to_readable(waiting_time)
-        print '%s Backlog Age: %s' % (status, time)
+        print '%s Backlog Age: %s, Ignored: %s' % (status, time, ignored)
         sys.exit(status_code[status])
     except Exception as e:
         print e
         sys.exit(status_code.get('UNKNOWN'))
-		

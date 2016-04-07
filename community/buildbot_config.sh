@@ -1,6 +1,7 @@
-while getopts w: opts; do
+while getopts w:v: opts; do
    case ${opts} in
       w) workdir=${OPTARG} ;;
+      v) venv=${OPTARG} ;;
    esac
 done
 
@@ -9,7 +10,11 @@ then
     workdir="$HOME/.mozilla/releng"
 fi
 
-venv="$workdir/venv"
+if [ -z "$venv" ];
+then
+    venv="$workdir/venv"
+fi
+
 masters_dir="$workdir/masters"
 slaves_dir="$workdir/slaves"
 repos_dir="$workdir/repos"

@@ -3,12 +3,24 @@
 # Purpose:  This script does the following:
 #             - generate allthethings.json
 #
-while getopts p:q opts; do
+while getopts w:v:p:q opts; do
    case ${opts} in
+      w) workdir=${OPTARG} ;;
+      v) venv=${OPTARG} ;;
       p) python_path=${OPTARG} ;;
       q) quiet="-q" ;;
    esac
 done
+
+if [ -z "$workdir" ];
+then
+    workdir="$HOME/.mozilla/releng"
+fi
+
+if [ -z "$venv" ];
+then
+    venv="$workdir/venv"
+fi
 
 if [ ! -z "$python_path" ];
 then
@@ -18,7 +30,6 @@ fi
 
 # Root variables
 publishing_path="/var/www/html/builds/allthethings"
-workdir="$HOME/.mozilla/releng"
 
 allthethings="$workdir/repos/buildbot-configs/allthethings.json"
 date=`date +%Y%m%d%H%M%S`
@@ -43,7 +54,7 @@ trap cleanup EXIT INT
 
 function make_allthethings() {
     log=$1
-    source $workdir/venv/bin/activate
+    source $venv/bin/activate
     cd $repos_dir/buildbot-configs
 
     # Generate allthethings.json

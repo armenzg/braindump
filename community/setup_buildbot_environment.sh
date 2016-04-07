@@ -4,11 +4,12 @@
 #             - check-out and update all required Buildbot Release Engineering repositories
 #             - create buildbot virtual environments
 #
-while getopts cdw:p:qh opts; do
+while getopts cdw:v:p:qh opts; do
    case ${opts} in
       c) clobber=1 ;;
       d) debug=1 ;;
       w) workdir=${OPTARG} ;;
+      v) venv=${OPTARG} ;;
       p) python_path=${OPTARG} ;;
       q) quiet="-q" ;;
       h) help=1 ;;
@@ -35,6 +36,11 @@ fi
 if [ -z "$workdir" ];
 then
     workdir="$HOME/.mozilla/releng"
+fi
+
+if [ -z "$venv" ];
+then
+    venv="$workdir/venv"
 fi
 
 if [ ! -z "$clobber" ];
@@ -67,7 +73,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Load important variables: venv, masters_dir, slaves_dir, repos_dir et al
 # Update PATH and PYTHONPATH
-. "$script_dir/buildbot_config.sh" -w "$workdir"
+. "$script_dir/buildbot_config.sh" -w "$workdir" -v "$venv"
 
 if [ ! -d "$repos_dir" ]
 then

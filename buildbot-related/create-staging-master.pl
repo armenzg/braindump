@@ -30,7 +30,7 @@ sub write_file {
 
 my $HOME = $ENV{'HOME'};
 my $username = $ENV{'USER'};
-my $hostname = 'dev-master1.srv.releng.scl3.mozilla.com';
+my $hostname = 'dev-master2.srv.releng.scl3.mozilla.com';
 my $basedir = '/builds/buildbot';
 my $master_dir;
 my $dry_run = 0;

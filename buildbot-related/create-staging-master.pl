@@ -163,7 +163,7 @@ print("writing config.json\n");
 write_file("config.json", $config_json);
 run("hg -q clone http://hg.mozilla.org/build/buildbot-configs tmp");
 cd("tmp");
-run("make -f Makefile.setup MASTER_NAME=sm-$username BASEDIR=$outdir PYTHON=python2.6 VIRTUALENV=virtualenv BUILDBOTCUSTOM_BRANCH=default BUILDBOTCONFIGS_BRANCH=default USER=$username MASTERS_JSON=$outdir/config.json virtualenv deps install-buildbot master master-makefile");
+run("make -f Makefile.setup MASTER_NAME=sm-$username BASEDIR=$outdir PYTHON=/tools/python27/bin/python2.7 VIRTUALENV=virtualenv BUILDBOTCUSTOM_BRANCH=default BUILDBOTCONFIGS_BRANCH=default USER=$username MASTERS_JSON=$outdir/config.json virtualenv deps install-buildbot master master-makefile");
 
 cd("$outdir/master");
 if (-e "$HOME/passwords.py") {

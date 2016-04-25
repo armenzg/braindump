@@ -84,13 +84,6 @@ default = https://hg.mozilla.org/integration/mozilla-inbound
 EOF
     time tar cf ../../mozilla-inbound.tar .
 
-    # inbound
-    cat << EOF > hgrc
-[paths]
-default = https://hg.mozilla.org/integration/b2g-inbound
-EOF
-    time tar cf ../../b2g-inbound.tar .
-
     # revert to central
     cat << EOF > hgrc
 [paths]
@@ -100,7 +93,7 @@ EOF
 
 upload(){
     for bucket in mozilla-releng-tarballs-use1 mozilla-releng-tarballs-usw2; do
-        for tarball in mozilla-central.tar mozilla-inbound.tar try.tar b2g-inbound.tar; do
+        for tarball in mozilla-central.tar mozilla-inbound.tar try.tar ; do
             time s3cmd --acl-public put $HG_SHARE_BASE_DIR/$tarball s3://$bucket/$tarball
         done
 

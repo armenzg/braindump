@@ -80,7 +80,7 @@ def main():
     log.debug("got %i results", all_results.rowcount)
 
     # Filter only certain branches
-    branches = ['b2g-inbound', 'mozilla-inbound', 'try', 'mozilla-central']
+    branches = ['mozilla-inbound', 'try', 'mozilla-central']
     results = [row for row in all_results if any(b in row.name for b in branches)]
 
     log.debug("got %i filtered results", len(results))

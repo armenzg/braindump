@@ -1,0 +1,77 @@
+---
+metadata:
+  name: Download and sign
+  description: Download a file and sign it
+  owner: rail@mozilla.com
+  source: https://github.com/rail
+
+scopes:
+  - docker-worker:*
+  - queue:*
+  - scheduler:*
+  - project:releng:signing:*
+
+tasks:
+  - taskId: '{{ stableSlugId("download_task") }}'
+    task:
+      created: '{{ now }}'
+      deadline: '{{ fromNow("24 hours") }}'
+      metadata:
+        owner: rail@mozilla.com
+        source: https://github.com/rail
+        name: download file
+        description: download and generate signing manifest
+      workerType: "opt-linux64"
+      provisionerId: "aws-provisioner-v1"
+
+      scopes:
+        - docker-worker:cache:tc-vcs
+        - docker-worker:image:taskcluster/builder:0.5.9
+        - queue:define-task:aws-provisioner-v1/opt-linux64
+        - queue:create-task:aws-provisioner-v1/opt-linux64
+        - queue:define-task:aws-provisioner-v1/build-c4-2xlarge
+        - queue:create-task:aws-provisioner-v1/build-c4-2xlarge
+        - docker-worker:cache:tooltool-cache
+        - docker-worker:relengapi-proxy:tooltool.download.public
+
+      tags:
+        createdForUser: rail@mozilla.com
+
+      payload:
+        image: taskcluster/desktop-build:0.1.11
+        maxRunTime: 7200
+        command:
+          - bash
+          - "-c"
+          - "mkdir -p /home/worker/artifacts && cd /home/worker/artifacts && wget -O \"{{ filename }}\" {{ url }} && echo '[{\"file_to_sign\": \"{{ filename }}\", \"hash\": \"{{ hash }}\"}]' > manifest.json"
+
+        artifacts:
+          'public/env':
+            path: /home/worker/artifacts/
+            type: directory
+            expires: '{{ fromNow("7 days") }}'
+
+  - taskId: '{{ stableSlugId("signing_task") }}'
+    requires:
+      - '{{ stableSlugId("download_task") }}'
+    task:
+      created: '{{ now }}'
+      deadline: '{{ fromNow("24 hours") }}'
+      metadata:
+        owner: rail@mozilla.com
+        source: https://github.com/rail
+        name: sign it
+        description: sign the file
+      extra:
+        signing:
+          signature: {{ sign_task(task_id=stableSlugId("signing_task"), valid_for=8 * 3600) }}
+      workerType: "signing-worker-v1"
+      provisionerId: "signing-provisioner-v1"
+      scopes:
+        - project:releng:signing:cert:release-signing
+        - project:releng:signing:format:{{ signign_format }}
+      tags:
+        createdForUser: rail@mozilla.com
+
+      payload:
+        signingManifest: 'https://queue.taskcluster.net/v1/task/{{ stableSlugId("download_task") }}/artifacts/public/env/manifest.json'

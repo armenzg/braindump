@@ -41,6 +41,7 @@ fi
 if [ -z "$venv" ];
 then
     venv="$workdir/venv"
+    releng_pth="$venv"/lib/python2.7/site-packages/releng.pth
 fi
 
 if [ ! -z "$clobber" ];
@@ -57,14 +58,19 @@ function gather_debug_information() {
     $venv/bin/pip freeze
     $venv/bin/python --version
     $venv/bin/python -c "import sys; import pprint; pprint.pprint(sys.path)"
-    cat "$venv"/lib/python2.7/site-packages/releng.pth
+    if [ -e $releng_pth ]; then
+      cat "$venv"/lib/python2.7/site-packages/releng.pth
+    fi
 }
 
 function move_and_exit() {
     echo "ERROR: Failed venv generation (moved to $workdir/failed_venv."
-    mv $venv $workdir/failed_venv
-    rm -rf $venv
+    # Gather information before we move the venv
     gather_debug_information
+
+    rm -rf $workdir/failed_venv
+    mv $venv $workdir/failed_venv || exit 1
+    rm -rf $venv
     echo "EXIT setup_buildbot_environment.sh"
     exit 1
 }
@@ -117,8 +123,6 @@ if [ ! -d "$venv" ]
 then
     virtualenv $python_path $quiet --no-site-packages "$venv" || move_and_exit
     $venv/bin/pip install $quiet -U pip
-    # To remove InsecurePlatformWarning output
-    $venv/bin/pip install requests[security]
     # If on Mac, you might need to run `xcode-select --install`
     # XXX: Could not make it work on Mac. Cryptography on Mac needs to be installed with --no-use-wheel
     $venv/bin/pip install $quiet -r "$bdu/community/pre_buildbot_requirements.txt" \
@@ -132,8 +136,8 @@ then
         --trusted-host pypi.pub.build.mozilla.org || move_and_exit
     # XXX: It's been reported that OpenSSL==0.13 is needed in some cases
     # This is so we can reach buildbotcustom and tools when activating the venv
-    echo "$repos_dir" >> "$venv"/lib/python2.7/site-packages/releng.pth
-    echo "$tools/lib/python" >> "$venv"/lib/python2.7/site-packages/releng.pth
+    echo "$repos_dir" >> $releng_pth
+    echo "$tools/lib/python" >> $releng_pth
 fi
 
 if [ -z "$quiet" ]

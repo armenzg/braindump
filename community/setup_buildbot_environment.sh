@@ -140,6 +140,12 @@ then
     echo "$tools/lib/python" >> $releng_pth
 fi
 
+"$venv/bin/buildbot" --version > /dev/null
+status=$?
+if [ $status -ne 0 ]; then
+    echo "Buildbot is not installed properly"; exit 1
+fi
+
 if [ -z "$quiet" ]
 then
     echo ""

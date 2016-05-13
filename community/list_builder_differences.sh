@@ -60,10 +60,10 @@ fi
 . "$script_dir/buildbot_config.sh" -w "$workdir"
 
 # Let's setup the buildbot environment and update it
-"$script_dir/setup_buildbot_environment.sh" -w "$workdir" -q $clobber
+"$script_dir/setup_buildbot_environment.sh" -w "$workdir"
 
 if test "$?" -ne 0 ; then
-    echo "We have failed to setup the buildbot environment".
+    echo "We have failed to setup the buildbot environment. Try again."
     exit 1
 fi
 
@@ -80,6 +80,7 @@ fi
 
 if [ ! -z $tools_patch ]
 then
+    # This is needed if you need to patch buildbot-configs *and* the tools repo.
     echo "Patching ${tools}..."
     cd $tools
     patch -p1 < $tools_patch
@@ -91,6 +92,19 @@ fi
 # Activate the virtual environment
 /bin/bash -c ". $venv/bin/activate"
 
+if [ -z $faster ] # We can skip the testing if we want
+then
+    echo "Test current state before proceeding"
+    # We test that we're in a good state to begin with
+    cd $bco && rm -rf test-output && $bco/test-masters.sh -e
+    if test "$?" -ne 0 ; then
+        echo "\nFAILED TESTS: test-masters.sh did not pass.\n"
+        echo "\nIt is likely that a change unrelated to your patch needs to backed out.\n"
+        echo "Talk with #releng."
+        exit 1
+    fi
+fi
+
 echo "Patching ${bco}..."
 cd $bco && patch -p1 < $patch_to_test || exit
 
@@ -98,9 +112,7 @@ if [ -z $faster ] # We can skip the testing if we want
 then
     # This step checks that the patch is actually good
     export VIRTUAL_ENV="1" # This is to remove an unneeded warning in test-masters.sh
-    rm -rf test-output
-    # Bug 1142237
-    #$bco/test-masters.sh -e
+    cd $bco && rm -rf test-output && $bco/test-masters.sh -e
     if test "$?" -ne 0 ; then
         echo "\nFAILED TESTS: test-masters.sh did not pass.\n"
         echo "Your patch does not pass the tests. See the masters that failed above and"

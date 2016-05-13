@@ -123,6 +123,14 @@ if [ ! -d "$venv" ]
 then
     virtualenv $python_path $quiet --no-site-packages "$venv" || move_and_exit
     $venv/bin/pip install $quiet -U pip
+
+    # For older versions than Python 2.7.9 it is more secure to have requests[security] installed
+    # This will remove InsecurePlatformWarning output
+    pyver=$(python -c "import sys; print('.'.join(map(str, sys.version_info[2:3])))")
+    if (( $pyver < 9 )); then
+      $venv/bin/pip install requests[security]
+    fi
+
     # If on Mac, you might need to run `xcode-select --install`
     # XXX: Could not make it work on Mac. Cryptography on Mac needs to be installed with --no-use-wheel
     $venv/bin/pip install $quiet -r "$bdu/community/pre_buildbot_requirements.txt" \

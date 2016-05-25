@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# /usr/bin/env python2.7
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -10,7 +10,7 @@ import time
 
 from optparse import OptionParser
 
-__version__ = "1.0"
+__version__ = "1.1"
 submitted_at = []
 pending_url = 'https://secure.pub.build.mozilla.org/builddata/buildjson/builds-pending.js'
 status_code = {'OK': 0, 'WARNING': 1, "CRITICAL": 2, "UNKNOWN": 3}
@@ -33,17 +33,20 @@ def should_ignore(name):
 
 
 # Get the earliest 'submitted_at' value
-def get_min_submitted_at():
-    response = urllib2.urlopen(pending_url)
+def get_min_submitted_at(unix_time):
+    response = urllib2.urlopen(pending_url, timeout=30)
     result = json.loads(response.read())
     ignored = 0
-    for branch in result['pending'].keys():
-        for revision in result['pending'][branch].keys():
-            for request in result['pending'][branch][revision]:
-                if should_ignore(request['buildername']):
-                    ignored += 1
-                    continue
-                submitted_at.append(request['submitted_at'])
+    if len(result['pending']) == 0:
+         submitted_at.append(unix_time)
+    else:
+        for branch in result['pending'].keys():
+            for revision in result['pending'][branch].keys():
+                for request in result['pending'][branch][revision]:
+                    if should_ignore(request['buildername']):
+                        ignored += 1
+                        continue
+                    submitted_at.append(request['submitted_at'])
     return min(submitted_at), ignored
 
 
@@ -75,7 +78,7 @@ if __name__ == '__main__':
 
     try:
         unix_time = get_unix_time()
-        min_submitted_at, ignored = get_min_submitted_at()
+        min_submitted_at, ignored = get_min_submitted_at(unix_time)
         waiting_time = unix_time - min_submitted_at
         status = pending_builds_status(waiting_time, option.critical_threshold, option.warning_threshold)
         time = get_unix_to_readable(waiting_time)

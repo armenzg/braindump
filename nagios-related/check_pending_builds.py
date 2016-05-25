@@ -8,18 +8,27 @@ import sys
 import argparse
 import urllib2
 import json
+import StringIO
+import gzip
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 pending_url = 'https://secure.pub.build.mozilla.org/builddata/buildjson/builds-pending.js'
-allthethings_path = '/var/www/html/builds/allthethings.json'
+allthethings_url = 'https://secure.pub.build.mozilla.org/builddata/reports/allthethings.json.gz'
 status_code = {'OK': 0, 'WARNING': 1, "CRITICAL": 2, "UNKNOWN": 3}
+
+
+def get_allthethings_json():
+    response = urllib2.urlopen(allthethings_url, timeout=30)
+    compressed_data = StringIO.StringIO(response.read())
+    decompressed_data = gzip.GzipFile(fileobj=compressed_data)
+    return json.load(decompressed_data)
 
 
 # get the pending builds and their count
 def get_pending_builds():
     pending_builds = {}
-    response = urllib2.urlopen(pending_url)
+    response = urllib2.urlopen(pending_url, timeout=30)
     result = json.loads(response.read())
     for branch in result['pending'].keys():
         for revision in result['pending'][branch].keys():
@@ -33,18 +42,16 @@ def get_pending_builds():
 
 
 # get the builder names and their corresponding slavepools
-def get_builders_and_slavepools():
+def get_builders_and_slavepools(allthethings_json):
     builders_and_slavepools = []
-    with open(allthethings_path) as f:
-        result = json.load(f)
     slavepool_cache = {}
-    for builder_name in result['builders'].keys():
-        slavepool_id = result['builders'][builder_name]['slavepool']
+    for builder_name in allthethings_json['builders'].keys():
+        slavepool_id = allthethings_json['builders'][builder_name]['slavepool']
         pools = []
         if slavepool_id in slavepool_cache:
             pools = slavepool_cache[slavepool_id]
         else:
-            slavepool = result['slavepools'][slavepool_id]
+            slavepool = allthethings_json['slavepools'][slavepool_id]
             for s in slavepool:
                 if s[:s.rfind('-')] not in pools:
                     pools.append(s[:s.rfind('-')])
@@ -106,14 +113,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
+        allthethings_json = get_allthethings_json()
         pending_builds = get_pending_builds()
-        builders_and_slavepools = get_builders_and_slavepools()
+        builders_and_slavepools = get_builders_and_slavepools(allthethings_json)
         slavepools = get_slavepools(builders_and_slavepools)
         top_count_by_slavepool = get_count_by_slavepool(pending_builds, builders_and_slavepools, slavepools)
         status = pending_builds_status(
             top_count_by_slavepool[0][1], args.critical_threshold, args.warning_threshold)
-        print '%s Pending Builds: %i' % (status, top_count_by_slavepool[0][1]),\
-            "on %s" % top_count_by_slavepool[0][0]
+        output = '%s Pending Jobs: %i' % (status, top_count_by_slavepool[0][1])
+        if top_count_by_slavepool[0][1] > 0:
+            output += " on %s" % top_count_by_slavepool[0][0]
+        print output
         sys.exit(status_code[status])
     except Exception as e:
         print e
